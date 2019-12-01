@@ -1,0 +1,81 @@
+<div id="start-tab-content">
+    <div id="start-tab-article-content" class="news-content">
+        {% include "web/start_tab/start_news_listview.html" %}
+        <div id="other-news-area-loading" style="display:none;"></div>
+        <div id="other-news-area" class="k-content">
+            <div id="article-column-1" class="article-column bordered-right"></div>
+            <div id="article-column-2" class="article-column bordered-right bordered-left share-left-border"></div>
+            <div id="article-column-3" class="article-column bordered-left share-left-border"></div>
+            <div class="float-separator"></div>
+        </div>
+    </div>
+    <div id="start-polls-side-bar" class="news-polls-side-bar"></div>
+    <div class="float-separator"></div>
+</div>
+<script type="application/javascript">
+    function loadArticles(){
+        $("#other-news-area").hide();
+        var otherNewsAreaLoading = $("#other-news-area-loading");
+        otherNewsAreaLoading.setLoadingMask();
+        var startTabContent = $("#start-tab-content");
+        $.ajax({
+            url: '{% url "web.articles.load_start_tab_articles" %}',
+            type: 'POST',
+            success: function (articles){
+                //$("#start-news-listview")
+                var articlesSlider = articles.slice(0, 7);
+                var articlesBottom = articles.slice(7);
+                var listView = startTabContent.find("#start-news-listview").data("kendoListView");
+                listView.dataSource.data(articlesSlider);
+                listView.refresh();
+                var articlesBlock = startTabContent.find("#other-news-area");
+                if (articlesBottom.length>0){
+                    var columnTotal = 3;
+                    var columnCount = 1;
+                    articlesBlock.find(".article-column").empty();
+                    $(articlesBottom).each(function (){
+                        var article = this;
+                        var newArticleBlock = $.GuiHelper.getArticleBlock(article);
+
+                        articlesBlock.find("#article-column-" + columnCount).append(newArticleBlock);
+                        if (columnCount < columnTotal)
+                            columnCount += 1;
+                        else
+                            columnCount = 1;
+                    });
+                }
+                else{
+                    articlesBlock.remove();
+                    var noArticlesMsg = $($.GuiHelper.noArticlesMsgTemplate);
+                    $('#start-tab-article-content').append(noArticlesMsg);
+                }
+                otherNewsAreaLoading.empty().hide();
+                $("#other-news-area").fadeIn();
+            }
+        });
+    }
+    function loadSidePolls(){
+        var pollsSideBar = $("#start-polls-side-bar");
+        pollsSideBar.setLoadingMask();
+        $.ajax({
+            url: '{% url "web.polls.load_random" %}',
+            type: 'POST',
+            success: function (polls){
+                var isReader = "{{ is_reader }}" === "True";
+                pollsSideBar.empty();
+                $(polls).each(function (){
+                    var poll = this;
+                    var pollBlock = $.GuiHelper.getPollBlock(poll, isReader);
+                    pollsSideBar.append(pollBlock);
+                });
+                if(polls.length <= 0) {
+                    pollsSideBar.append($.GuiHelper.noPollsMsgTemplate);
+                }
+            }
+        });
+    }
+    $(document).ready(function(){
+        loadArticles();
+        loadSidePolls();
+    });
+</script>

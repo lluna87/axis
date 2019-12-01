@@ -1,0 +1,500 @@
+{% extends "web/shared/base.html" %}
+{% load static %}
+{% block extra_meta %}
+    <meta http-equiv="cache-control" content="max-age=0" />
+    <meta http-equiv="cache-control" content="no-cache" />
+    <meta http-equiv="expires" content="0" />
+    <meta http-equiv="expires" content="Tue, 01 Jan 1980 1:00:00 GMT" />
+    <meta http-equiv="pragma" content="no-cache" />
+{% endblock %}
+{% block title %}Publicación de artículo{% endblock %}
+{% block extrascript %}
+    <script type="text/javascript" src="{% static "js/utils/article_editor_helpers.js" %}"></script>
+{% endblock %}
+{% block content %}
+    {% include "web/shared/header.html" %}
+    <div id="article-editor-content">
+        <form id="article-editor-form" method="post">
+            {% csrf_token %}
+            <div id="editor-header" class="k-header">
+                <span id="editor-header-title">PUBLICACIÓN DE ARTICULO</span>
+            </div>
+            <div class="k-widget article-editor-container">
+                <div id="article-side-menu" class="side-menu">
+                    <div class="side-button" id="info-menu-button">Información</div>
+                    <div class="side-button" id="text-menu-button">Texto</div>
+                    <div class="side-button" id="images-menu-button">Imágenes</div>
+                    <!-- BUTTONS -->
+                    <div id="article-editor-buttons">
+                        <button id="editor-publish-btn" class="k-button k-grid-update" type="submit" onclick="return false;">
+                        <span class="k-icon k-update"></span>Guardar
+                        </button>
+                        <div id="editor-cancel-btn" class="k-button k-grid-cancel" title="Volver a Publicación"
+                           onclick="articleEditorReturn()">
+                            <span class="k-icon k-i-arrow-w"></span>Volver
+                        </div>
+                        <div class="float-separator"></div>
+                    </div>
+                    <div id="article-status"></div>
+                </div>
+                <div class="article-data-container">
+                    <div id="article-info-editor" class="article-editor-display" style="display: none;">
+                        {% with article as article %}
+                            {% include "web/editor_templates/article/info_editor.html" %}
+                        {% endwith %}
+                    </div>
+                    <div id="article-body-editor" class="article-editor-display" style="display: none;">
+                        {% with article as article %}
+                            {% include "web/editor_templates/article/text_editor.html" %}
+                        {% endwith %}
+                    </div>
+                    <div id="article-images-editor" class="article-editor-display" style="display: none;">
+                        {% with article as article %}
+                            {% include "web/editor_templates/article/images_editor.html" %}
+                        {% endwith %}
+                    </div>
+                    <div class="float-separator"></div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div id="author-win"></div>
+    <div id="img-del-confirm-win" style="display: none;">
+        <div style="padding-top: 10px; padding-bottom: 10px;text-align: center;">
+            <div>
+                ¿Desea eliminar la imagen seleccionada?
+            </div>
+            <div>
+                Esta accion no puede deshacerse
+            </div>
+        </div>
+        <div style="border-color: #C5C5C5; border-style: solid; border-top-width: 1px;border-bottom-width: 0;border-left-width: 0;border-right-width: 0;
+            padding-top: 8px;">
+            <div id="cancel-btn" style="float:right;" class="k-button k-grid-edit" title="Editar registro">
+                <span class="k-icon k-cancel"></span>Cancelar
+            </div>
+            <div id="ok-btn" style="float:right;margin-right: 10px;" class="k-button k-grid-edit" title="Editar registro">
+                <span class="k-icon k-update"></span>Aceptar
+            </div>
+            <div class="float-separator"></div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        var articleValidator = $("#article-editor-content").kendoValidator({
+            rules: {
+                imageValidation: function (input) {
+                    if (input.is("[name='image-files']")) {
+                        if (articleImgListView.dataSource.data().length == 0){
+                            input.attr("data-imageValidation-msg", "Debe seleccionar al menos una imagen.");
+                            return false
+                        }
+                    }
+                    return true;
+                }
+            },
+            messages: {
+             url: "URL inválida"
+            }
+        }).data("kendoValidator");
+        /* UI WIDGETS - AUTHOR COMBOBOX */
+        var authorCombo = $("#author").kendoComboBox({
+            dataTextField: "author_display",
+            dataValueField: "author_id",
+            dataSource: {
+                type: "json",
+                transport: { read: { url: "{% url 'web.authors.load_combo' %}", dataType: "json" } }
+            },
+            filter: "contains"
+        }).data("kendoComboBox");
+        function onClose_AuthorWin(e){
+            authorCombo.dataSource.read();
+        }
+        function onClick_AddAuthor() {
+            activeAuthorWindow =  $("#author-win").kendoWindow({
+                visible: false,
+                modal: true,
+                title: "Registrar Autor",
+                content: '{% url "web.authors.external_insert" %}',
+                close: onClose_AuthorWin
+            }).data("kendoWindow");
+        }
+
+        var toolgroups = [
+            "bold", "italic", "underline", "strikethrough", "justifyLeft", "justifyCenter", "justifyRight",
+            "justifyFull", "insertUnorderedList", "insertOrderedList", "indent", "outdent", "createLink",
+            "unlink", "createTable", "addRowAbove", "addRowBelow", "addColumnLeft",
+            "addColumnRight", "deleteRow", "deleteColumn", "formatting", "fontName", "fontSize", "foreColor",
+                "viewHtml"
+        ];
+
+        function onKeyDown_BodyEditor(e){
+            /*
+            if (e.sender.encodedValue().length > {{ ARTICLE_BODY_LENGTH }}){
+                e.preventDefault();
+            }
+            */
+        }
+
+        function onKeyDown_SummaryEditor(e){
+            /*
+            var length = e.sender.value().length;
+            var t = {{ ARTICLE_SUMMARY_LENGTH }};
+            if (e.sender.encodedValue().length > {{ ARTICLE_SUMMARY_LENGTH }}){
+                var string = e.sender.encodedValue().substring(0,{{ ARTICLE_SUMMARY_LENGTH }});
+                e.sender.value(string);
+                e.preventDefault();
+            }
+            */
+        }
+
+        $("#body-text").kendoEditor({
+            tools: toolgroups,
+            encoded:true,
+            keydown: onKeyDown_BodyEditor
+        });
+        $("#content-summary").kendoEditor({
+            tools: toolgroups,
+            encoded:true,
+            keydown: onKeyDown_SummaryEditor
+        });
+
+        /* TAG MULTISELECT */
+        function getTagsDSMostRecentIndex(dataSource) {
+            var result = 0;
+            $(dataSource.data()).each(function () { if (this.value > result) { result = this.value; } });
+            return result;
+        }
+        function validTagCallback(newArticleTag) {
+            var multi = $("#article-editor-tags").data("kendoMultiSelect");
+            var newIndex = parseInt(getTagsDSMostRecentIndex(multi.dataSource)) + 1;
+            multi.dataSource.add({ text: newArticleTag, value: "" + newIndex });
+            var values = multi.value().slice();
+            $.merge(values, ["" + newIndex]);
+            multi.value(values);
+            $("#new-tag-input").val("");
+        }
+        function onClick_AddArticleTags(element) {
+            var newArticleTag = $("#new-tag-input").val();
+            if (newArticleTag !== undefined && newArticleTag !== null && newArticleTag != "") {
+                $("#new-tag-input").css("background-color", "#FFFFFF");
+                validTagCallback(newArticleTag);
+            }
+            else {
+                $("#new-tag-input").css("background-color", "#FFB3CC");
+            }
+        }
+
+        $("#new-tag-input").onEnterKey(function (){
+            $("#article-edit-add-tags-btn").trigger("click");
+        });
+
+        var articleTagsMultiselectData = [];
+        var articleTagsMultiselect = $("#article-editor-tags").kendoMultiSelect({
+            dataTextField: "text",
+            dataValueField: "value",
+            dataSource: articleTagsMultiselectData
+        }).data("kendoMultiSelect");
+
+        {% if article_tags.count > 0 %}
+            var tagValues = [];
+            var tagCount = 0;
+            {% for tag in article_tags %}
+                tagCount += 1;
+                tagValues.push(tagCount);
+                articleTagsMultiselect.dataSource.add({ text: "{{ tag.tag }}", value: "" + tagCount });
+            {% endfor %}
+            articleTagsMultiselect.value(tagValues);
+        {% endif %}
+
+
+        /* SOURCE MULTISELECT */
+        function getSourcesDSMostRecentIndex(dataSource) {
+            var result = 0;
+            $(dataSource.data()).each(function () { if (this.value > result) { result = this.value; } });
+            return result;
+        }
+        function validSourceCallback(newArticleSource) {
+            var multi = $("#article-editor-sources").data("kendoMultiSelect");
+            var newIndex = parseInt(getSourcesDSMostRecentIndex(multi.dataSource)) + 1;
+            multi.dataSource.add({ text: newArticleSource, value: "" + newIndex });
+            var values = multi.value().slice();
+            $.merge(values, ["" + newIndex]);
+            multi.value(values);
+            $("#new-source-input").val("");
+        }
+        function onClick_AddArticleSource(element) {
+            var newSourceInput = $("#new-source-input");
+
+            var newArticleSource = newSourceInput.val();
+            if (articleValidator.validateInput(newSourceInput) && newArticleSource != ""){
+                validSourceCallback(newArticleSource);
+            }
+            /*
+            var newArticleSource = newSourceInput.val();
+            if (newArticleSource !== undefined && newArticleSource !== null && newArticleSource != "") {
+                var urlRegEx = "{{ URL_REGEX }}";
+                var validUrl = new RegExp(urlRegEx,'g').test(newArticleSource);
+                if (validUrl){
+                    newSourceInput.css("background-color", "#FFFFFF");
+                    validSourceCallback(newArticleSource);
+                }
+                else { newSourceInput.css("background-color", "#FFB3CC"); }
+            }
+            else { newSourceInput.css("background-color", "#FFB3CC"); }
+            */
+        }
+
+        $("#new-source-input").onEnterKey(function (){
+            $("#article-edit-add-sources-btn").trigger("click");
+        });
+
+        var articleSourcesMultiselectData = [];
+        var articleSourcesMultiselect = $("#article-editor-sources").kendoMultiSelect({
+            dataTextField: "text", dataValueField: "value", dataSource: articleSourcesMultiselectData
+        }).data("kendoMultiSelect");
+
+        {% if article_sources.count > 0 %}
+            var sourceValues = [];
+            var sourceCount = 0;
+            {% for source in article_sources %}
+                sourceCount += 1;
+                sourceValues.push(sourceCount);
+                articleSourcesMultiselect.dataSource.add({ text: "{{ source.url }}", value: "" + sourceCount });
+            {% endfor %}
+            articleSourcesMultiselect.value(sourceValues);
+        {% endif %}
+
+
+        var articleSectionsMultiselect = $("#article-editor-sections").kendoMultiSelect({
+            dataTextField: "section", dataValueField: "id", dataSource: {
+                type: "post",
+                transport: {
+                    read: {
+                        url: "{% url 'web.sections.select_combo' %}"
+                    }
+                }
+            }
+        }).data("kendoMultiSelect");
+        {% if article_sections.count > 0 %}
+            var sectionValues = [];
+            var sectionCount = 0;
+            {% for section in article_sections %}
+                sectionValues.push("{{ section.id }}");
+            {% endfor %}
+            articleSectionsMultiselect.value(sectionValues);
+        {% endif %}
+
+        // Bind validation to blur
+        $("input", articleSectionsMultiselect.wrapper).on("blur", function() {
+            articleValidator.validate();
+        });
+        /* IMAGE UPLOADER */
+        function onSuccess_imageFilesUpload(e) {
+            articleImgDataSource.read();
+        }
+        articleImgUpload = $("#image-files").kendoUpload({
+            localization: $.kendoHelper.uploadLocalization,
+            async: {
+                saveUrl: "{% url 'web.articles.upload_temp_images' %}",
+                autoUpload: true,
+                batch: true
+            },
+            success: onSuccess_imageFilesUpload,
+            multiple: true,
+            showFileList: false
+        }).data("kendoUpload");
+        /* IMAGE LISTVIEW */
+        var articleImgsUrl = '{% url "web.articles.image_listview" %}';
+
+        var articleImgDataSource = new kendo.data.DataSource({
+            transport: { read: {
+                url: articleImgsUrl,
+                dataType: "json", type: "POST"
+                {% if article_id %}
+                    , data: { article_id: parseInt("{{ article_id }}") }
+                {% endif %}
+                }
+            },
+            schema: {
+                model: {
+                    id: "image_path",
+                    fields: {
+                        image_path: { type: "string" },
+                        temp: { type: "boolean" },
+                        image_id: { type: "number" }
+                    }
+                }
+            },
+            pageSize: 10
+        });
+        var articleImgPager = $("#article-img-pager").kendoPager({
+            dataSource: articleImgDataSource,
+            refresh: true,
+            messages: $.kendoHelper.pagerMessages
+        }).data("kendoPager");
+        function onDataBound_articleImgListView(e) {
+            // Fit items
+            $('.article-create-img img').each(function () {
+                var imgSrc = $(this).attr("src");
+                var isMain = $(this).attr("is_main") !== undefined && $(this).attr("is_main") === "true";
+                if (imgSrc.containsStr("main") || isMain){
+                    $(this).parent().addClass("article-img-main");
+                }
+                var imgClass = (this.width / this.height > 1) ? 'wide' : 'tall';
+                $(this).addClass(imgClass);
+            });
+        }
+        articleImgListView = $("#img-listview").kendoListView({
+            dataSource: articleImgDataSource,
+            template: kendo.template($("#listview-template").html()),
+            dataBound: onDataBound_articleImgListView
+        }).data("kendoListView");
+        function onClick_articleImg(event, source) {
+            $("#img-listview").find(".article-img-main").removeClass("article-img-main");
+            $(source).addClass("article-img-main");
+            var splittedPath = $(source).find("img").attr("src").split("/");
+            var fileName = splittedPath[splittedPath.length - 1];
+            var image_id = $(source).find("img").attr("image_id");
+            sendData = {};
+            sendData["fileName"] = fileName;
+            if (image_id !== ""){
+                sendData["imageId"] = image_id;
+                sendData["articleId"] = "{{ article_id }}";
+            }
+            $.ajax({
+                url: '{% url "web.articles.tmp_img_as_main" %}',
+                type: 'POST',
+                data: sendData,
+                success: function (){
+                    articleImgListView.dataSource.read();
+                }
+            });
+        }
+        function onClick_deleteImg(event, source){
+            event.stopPropagation();
+            var msg = "¿Desea eliminar la imagen seleccionada?<br>Esta accion no puede deshacerse.";
+            var confirmationWindow = $.kendoHelper.getConfirmationWindow({
+                title: "Eliminar imagen",
+                msg: msg,
+                onConfirm: function (){
+                    var imgSrc = $(source).parent().find("img").attr("src");
+                    var splittedPath = $(source).parent().find("img").attr("src").split("/");
+                    var fileName = splittedPath[splittedPath.length - 1];
+                    var imgListviewData = articleImgListView.dataSource.data();
+                    var field = "image_path";
+                    var item = $(imgListviewData).searchByKey(field, imgSrc);
+                    var isTemp = false;
+                    if (item !== undefined){
+                        isTemp = item.temp;
+                    }
+                    $.ajax({
+                        url: '{% url "web.articles.delete_tmp_img" %}',
+                        type: 'POST',
+                        data: { file_name: fileName, temp: isTemp, image_id: item.image_id },
+                        success: function(e){
+                            articleImgDataSource.read();
+                        }
+                    });
+                }
+            });
+            confirmationWindow.center().open();
+        }
+        /* BUTTON FUNCTIONS  */
+        function articleEditorReturn(e) {
+            window.location = "{% url 'web.publish.return_to_article_grid' %}";
+        }
+        function articleMenuButtonClick(e) {
+            var eventButton = $(e.currentTarget);
+            var buttonId = eventButton.attr("id");
+            $(".article-editor-display").css("display", "none");
+            $(".side-button-selected").removeClass("side-button-selected");
+            switch (buttonId) {
+                case "info-menu-button":
+                    $("#article-info-editor").fadeToggle();
+                    $("#info-menu-button").addClass("side-button-selected");
+                    break;
+                case "text-menu-button":
+                    $("#article-body-editor").fadeToggle();
+                    $("#text-menu-button").addClass("side-button-selected");
+                    break;
+                case "images-menu-button":
+                    $("#article-images-editor").fadeToggle();
+                    $("#images-menu-button").addClass("side-button-selected");
+                    break;
+                default:
+                    alert("Error: El botón no tiene acción asociada.");
+                    break;
+            }
+        }
+        $(".side-button").click(articleMenuButtonClick);
+        $("#info-menu-button").trigger("click");
+
+        function processSubmit(e){
+            $("#article-editor-content").find("#new-source-input").val("");
+            if (!articleValidator.validate()) {
+                $("#article-editor-content").find("#article-status").attr("class", "side-status")
+                        .text("Existen datos sin completar, verifique la información ingresada.");
+            }
+            else {
+                $("#article-editor-content").find("#article-status").text("").attr("class", "");
+                var data = $("#article-editor-form").formData();
+
+                var tags = [];
+                $(articleTagsMultiselect.dataItems()).each(function (){
+                    tags.push(this.text);
+                });
+                data["tags"] = JSON.stringify(tags);
+
+                var sources = [];
+                $(articleSourcesMultiselect.dataItems()).each(function (){
+                    sources.push(this.text);
+                });
+                data["sources"] = JSON.stringify(sources);
+
+                var sectionIDs = [];
+                $(articleSectionsMultiselect.dataItems()).each(function (){
+                    sectionIDs.push(this.id);
+                });
+                data["sections"] = JSON.stringify(sectionIDs);
+
+                var images = [];
+                $(articleImgListView.dataSource.data()).each(function (){
+                    var item = {
+                        path: this.image_path,
+                        temp: this.temp
+                    };
+                    images.push(item);
+                });
+                data["image_paths"] = JSON.stringify(images);
+                {% if update_mode %}
+                    var destinationURL = '{% url "web.articles.update" %}';
+                    data['article_id'] = parseInt("{{ article_id }}");
+                {% else %}
+                    var destinationURL = '{% url "web.articles.insert" %}';
+                {% endif %}
+
+                $.ajax({
+                    url: destinationURL,
+                    type: 'POST',
+                    data: data,
+                    dataType: 'json',
+                    success: function(result){
+                        if (result){
+                            window.location = '{% url "web.publish.return_to_article_grid" %}';
+                        }
+                        else {
+                            return false;
+                        }
+                    }
+                });
+            }
+            // ANULAR SUBMIT
+            return false;
+        }
+        function onClick_refreshArticleSections(e){
+            articleSectionsMultiselect.dataSource.read();
+        }
+        $("#editor-publish-btn").click(processSubmit);
+        $("#article-edit-sections-refresh-btn").click(onClick_refreshArticleSections);
+    </script>
+{% endblock %}

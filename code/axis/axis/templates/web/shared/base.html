@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+{% load staticfiles %}
+{% load i18n %}
+{% load cache %}
+
+<html lang="{{ LANGUAGE_CODE|default:"en-us" }}">
+    <head>
+        <link rel="shortcut icon" href="{% static "img/shortcutico.png" %}">
+        <meta charset="utf-8">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        {% block extra_meta %}{% endblock %}
+
+        <title>{% block title %}{% endblock %}</title>
+        <!-- Less -->
+        <link rel="stylesheet/less" type="text/css" href="{% static "less/styles.less" %}">
+        <!-- CSS -->
+        <link rel="stylesheet" href="{% static "kendoui/styles/kendo.common.min.css" %}">
+        <link rel="stylesheet" href="{% static "kendoui/styles/kendo.personalized.css" %}">
+        <link rel="stylesheet" href="{% static "coin-slider/coin-slider-styles.css" %}">
+
+        <!-- Extras styles -->
+        {% block extrastyle %}{% endblock %}
+        <!-- Scripts -->
+        <script type="text/javascript" src="{% static "js/jquery/jquery-1.9.1.min.js" %}"></script>
+        <script type="text/javascript" src="{% static "js/jquery/jquery.color-2.1.2.min.js" %}"></script>
+        <script type="text/javascript" src="{% static "js/jquery/jquery.timers-1.2.js" %}"></script>
+        <script type="text/javascript" src="{% static "js/csrf.jquery.validation.js" %}"></script>
+        <script type="text/javascript" src="{% static "js/less-1.3.3.min.js" %}"></script>
+        <script type="text/javascript" src="{% static "kendoui/js/kendo.web.min.js" %}"></script>
+        <script type="text/javascript" src="{% static "coin-slider/coin-slider.js" %}"></script>
+        <script type="text/javascript" src="{% static "kendoui/js/cultures/kendo.culture.es-AR.min.js" %}"></script>
+        <script type="text/javascript" src="{% static "js/js.extensions.js" %}"></script>
+        <script type="text/javascript" src="{% static "js/jquery/jquery.extensions.js" %}"></script>
+        <script type="text/javascript" src="{% static "js/jquery/jquery.kendo-helpers.js" %}"></script>
+        <script type="text/javascript" src="{% static "js/jquery/jquery.gui-helper.js" %}"></script>
+        <script language="javascript">
+            var STATIC_URL = "{{ STATIC_URL }}";
+            var MEDIA_URL = "{{ MEDIA_URL }}";
+            var VOTE_REGISTER_URL = '{% url "web.polls.register_votes" %}';
+            var ARTICLE_READ_URL = '{% url 'web.articles.read' %}';
+            kendo.culture("es-AR");
+        </script>
+        {% include "web/utils/kendo_templates.html" %}
+        <!-- Extras scripts -->
+        {% block extrascript %}{% endblock %}
+        <!-- Extras -->
+        {% block extrahead %}{% endblock %}
+    </head>
+    <body class="{% block bodyclass %}{% endblock %}">
+        <!-- Container -->
+        {% block navbar %}
+            {% include "web/shared/navbar.html" %}
+        {% endblock %}
+        <div id="container-fluid">
+            <!-- Header -->
+            {#{% block header %}#}
+            {# {% include "shared/header_footer/header.html" %}#}
+            {#{% endblock %}#}
+            <!-- END Header -->
+
+            <!-- Content -->
+            {% block content %}
+            {% endblock %}
+            <br class="clearfix"/>
+            <!-- END Content -->
+
+            <!-- Footer -->
+            {% block footer %}
+                <!-- { include "shared/header_footer/footer.html" %} -->
+            {% endblock %}
+            <!-- END Footer -->
+        </div>
+        <!-- END Container -->
+        <!-- Scripts -->
+        <!-- Placed at the end of the document so the pages loads faster -->
+        {% block extrascript_lazy %}{% endblock %}
+    </body>
+</html>

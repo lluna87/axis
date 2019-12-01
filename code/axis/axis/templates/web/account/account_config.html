@@ -1,0 +1,218 @@
+{% extends "web/shared/base.html" %}
+{% block title %}
+        Configuración de cuenta
+{% endblock %}
+{% block navbar %}
+    {% include "web/shared/navbar.html" %}
+{% endblock %}
+{% block content %}
+    <div id="account-config-form-content">
+        {% include "web/account/account_config_form.html" %}
+    </div>
+    {% include "web/utils/validate_login_window.html" %}
+    <script type="text/javascript">
+        var TEMP_PROFILE_IMG_URL = {{ MEDIA_URL }} + "/temp/profile_images/";
+        var STATIC_IMG = "/axis/static/img/";
+        var PROFILE_IMG_URL = {{ MEDIA_URL }} + "/profile_images/";
+        var TEMP_UPLOADED_IMG_NAME = "";
+
+        var accountConfigFormContent = $("#account-config-form-content");
+
+        var validateLoginForm = $("#validate-login-form");
+        var validateLoginWindowContent = $("#validate-login-window");
+        var validateLoginWindow = validateLoginWindowContent.kendoWindow({
+            title: "Validar login",
+            modal: true,
+            draggable: false,
+            resizable: false,
+            visible: false
+        }).data("kendoWindow");
+        var validateLoginChecker = validateLoginForm.kendoValidator({
+            rules: {
+                validPassword: function(input){
+                    if (input.is("[id=id_password]")) {
+                        var password = $(input).val();
+                        var userPopupEditorValid = true;
+                        $.ajax({
+                            url: "{% url 'web.validate_login' %}",
+                            type: "post",
+                            dataType: "json",
+                            async: false,
+                            data: { password: password },
+                            success: function(valid){
+                                userPopupEditorValid = valid;
+                            }
+                        });
+                        return userPopupEditorValid;
+                    }
+                    return true;
+                }
+            },
+            messages: {
+                validPassword: "Contraseña inválida",
+                required: "Dato requerido",
+                requestedFormat: "Respete el formato correspondiente"
+            }
+        }).data("kendoValidator");
+
+        var registrationFormWindow = accountConfigFormContent.kendoWindow({
+            actions: {},
+            title: "Configuración de cuenta de usuario",
+            resizable: false,
+            visible: false
+        });
+
+        function onChange_favoriteSectionsMultiselect(e){
+            var value = favoriteSectionsMultiselect.value();
+            var favoriteSectionsData = $("#user-favorite-sections-data");
+            favoriteSectionsData.val("");
+            $(value).each(function(){
+                var actualValue = favoriteSectionsData.val();
+                if (actualValue === "") {
+                    favoriteSectionsData.val(this);
+                }
+                else {
+                    favoriteSectionsData.val(actualValue + "," + this);
+                }
+            });
+        }
+        function onDataBound_favoriteSectionsMultiselect(e){
+            var sections = [];
+            {% for section in user_data.sections %}
+                sections.push({{ section }});
+            {% endfor %}
+            favoriteSectionsMultiselect.value(sections);
+            var value = favoriteSectionsMultiselect.value();
+        }
+        var favoriteSectionsMultiselect = $("#user-favorite-sections").kendoMultiSelect({
+            dataTextField: "section", dataValueField: "id", dataSource: {
+                type: "post",
+                transport: {
+                    read: {
+                        url: "{% url 'web.sections.select_combo' %}"
+                    }
+                }
+            },
+            change: onChange_favoriteSectionsMultiselect,
+            dataBound: onDataBound_favoriteSectionsMultiselect
+        }).data("kendoMultiSelect");
+        var accountConfigValidator = accountConfigFormContent.kendoValidator({
+            rules: {
+                validOldPassword: function(input){
+                    if (input.is("[id=email]")) {
+                        var email = $(input).val();
+                        var userPopupEditorValid = true;
+                        var authUserId = accountConfigFormContent.find("#auth_user_id").val();
+                        $.ajax({
+                            url: "{% url 'web.users.verify_email_exists' %}",
+                            type: "post", dataType: "json", async: false,
+                            data: { email: email, auth_user_id : authUserId },
+                            success: function(data) { userPopupEditorValid = data; }
+                        });
+                        return userPopupEditorValid;
+                    }
+                    return true;
+                },
+                userNameExists: function(input){
+                    if (input.is("[id=user_name]")) {
+                        var userName = $(input).val();
+                        var userPopupEditorValid = true;
+                        var authUserId = accountConfigFormContent.find("#auth_user_id").val();
+                        $.ajax({
+                            url: "{% url 'web.users.verify_user_name_exists' %}",
+                            type: "post", dataType: "json", async: false,
+                            data: { user_name: userName, auth_user_id : authUserId },
+                            success: function(result) { userPopupEditorValid = result; }
+                        });
+                        return userPopupEditorValid;
+                    }
+                    return true;
+                },
+                bothPasswordsEqual: function (input){
+                    if (input.is("[id=password_confirm]")) {
+                        var userPopupEditor = $("#user-popup-editor");
+                        var passwordA = userPopupEditor.find("#password").val();
+                        var passwordB = userPopupEditor.find("#password_confirm").val();
+                        accountConfigValidator.validateInput(userPopupEditor.find("#password"));
+                        return passwordA == passwordB;
+                    }
+                    return true;
+                }
+            },
+            messages: {
+                validOldPassword: "E-Mail no disponible o no válido",
+                userNameExists: "Usuario no disponible o no válido",
+                required: "Dato requerido",
+                requestedFormat: "Respete el formato correspondiente",
+                bothPasswordsEqual: "Las contraseñas ingresadas no coinciden"
+            }
+        }).data("kendoValidator");
+        function loginSuccess(e){
+            if (e.valid_user){
+                if (e.valid_password){ window.location = e.next_route; }
+                else { $("#login-status").html("La contraseña ingresada no es válida").show(); }
+            }
+            else {
+                $("#login-status").html("La dirección de e-mail ingresada<br>no corresponde a un usuario registrado").show();
+            }
+        }
+        function cleanUserProfileImg(e){
+            var emptySilhouete = STATIC_IMG + "silhouette_user.png";
+            var oldImagePath = accountConfigFormContent.find("#profile-img-path").val();
+            accountConfigFormContent.find("#profile-img").attr("src", "").attr("src", emptySilhouete + "#" + new Date().getTime());
+            accountConfigFormContent.find("#profile-img-path").val("clean");
+            $.ajax({
+                url: "{% url 'web.users.clean_tmp_profile_img' %}",
+                type: "post",
+                data: { fileToClean: oldImagePath },
+                success: function(){
+                    accountConfigFormContent.find(".k-upload-status")
+                            .html('Imágen eliminada<span class="k-icon k-i-tick">Imágen eliminada</span>');
+                }
+            });
+        }
+        function onSuccess_userProfileImgUpload(e){
+            var fileRoute = TEMP_PROFILE_IMG_URL + e.response;
+            accountConfigFormContent.find("#profile-img").attr("src", "").attr("src", fileRoute + "#" + new Date().getTime());
+            var obj = accountConfigFormContent.find("#profile-img-path");
+            obj.text(e.response);
+            obj.val(e.response);
+        }
+        function onSelect_accountConfigImgUpload(e) {
+        var files = e.files;
+            $.each(files, function () {
+                var ext = this.extension.toLowerCase();
+                if (ext != ".jpeg" && ext != ".jpg" && ext != ".png" && ext != ".bmp" && ext != ".gif") {
+                    alert("Seleccione un archivo de imágen (*.jpeg, *.jpg, *.png, *.bmp, *.gif)");
+                    e.preventDefault();
+                }
+            });
+        }
+        accountConfigFormContent.find("#profile-img-select").kendoUpload({
+            localization: $.kendoHelper.uploadLocalization,
+            async: {
+                saveUrl: "{% url 'web.users.upload_profile_image' %}",
+                autoUpload: true
+            },
+            success: onSuccess_userProfileImgUpload,
+            multiple: false,
+            showFileList: false,
+            select: onSelect_accountConfigImgUpload
+        });
+        accountConfigFormContent.find("#profile-image-clean").show().click(cleanUserProfileImg);
+
+        accountConfigFormContent.data("kendoWindow").center().open();
+
+        validateLoginForm.submit(function (e){
+            e.preventDefault();
+            $("#account-config-form").submit();
+            validateLoginWindow.close();
+        });
+        $("#account-config-ok-btn").click(function (e) {
+            e.preventDefault();
+            if (accountConfigValidator.validate()){
+                validateLoginWindow.center().open();
+            }
+        });
+    </script>
+{% endblock %}

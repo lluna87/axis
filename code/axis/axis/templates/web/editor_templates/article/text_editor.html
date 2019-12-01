@@ -1,0 +1,16 @@
+<div class="article-edit-line article-summary-editor">
+    <div class="article-edit-label"><label for="content-summary">Resúmen de contenido</label></div>
+        <span class="k-invalid-msg" data-for="content-summary"></span>
+        <textarea id="content-summary" class="k-input k-textbox" name="content-summary" data-bind="value:content_summary"
+                  required data-required-msg="Ingrese texto como resúmen de contenido">{{ article.content_summary }}</textarea>
+</div>
+<div class="float-separator"></div>
+<div class="article-edit-line article-body-editor">
+    <div class="article-edit-label"><label for="body-text">Cuerpo</label></div>
+    <div class="article-edit-input" style="clear:left;">
+        <span class="k-invalid-msg" data-for="body-text"></span><br>
+        <textarea id="body-text" class="k-input k-textbox" name="body-text" data-bind="value:body_text"
+                  required data-required-msg="Ingrese texto de contenido" maxlength="{{ ARTICLE_BODY_LENGTH }}">{{ article.body_text }}</textarea>
+    </div>
+</div>
+<div class="float-separator"></div>

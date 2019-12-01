@@ -1,0 +1,57 @@
+<div id="author-editor" class="editor-container">
+    <input id="added_by" class="hidden" name="added_by" data-bind="value:added_by" type="number" value="{{ user.id }}" hidden="hidden">
+    <div class="profile-edit-line" style="margin-top: 5px;">
+        <input id="use-existing-user-check" type="checkbox" name="use_existing_user" style="display:inline-block"/>
+        <label for="use-existing-user-check" style="display:inline-block">Usar usuario existente</label>
+        <div  id="use-existing-user-combo" style="display:none">
+            <input id="users" style="width: 200px; display: none!important;" placeholder="Seleccione un usuario..." name="existing_user_id" data-bind="value:existing_user_id"/><br>
+        </div>
+    </div>
+    <div class="editor-inner-content">
+        <div id="profile-img-container">
+            <div class="profile-img-title">Imagen de perfil</div>
+            <div id="profile-img-file-content" class="profile-img-content">
+                <img id="profile-img" class="profile-img" src="{{ STATIC_URL }}img/silhouette_user.png"/><br>
+                <button id="profile-image-clean" type="button" class="k-button">Limpiar...</button>
+            </div>
+            <div id="profile-img-upload-content" class="profile-img-content">
+                <input id="profile-img-select" name="profile_image" type="file"/>
+                <input id="profile-img-path" autocomplete="off" name="profile_image_path" data-bind="value:profile_image_path" style="display: none;"/>
+                <input name="profile-image" type="text" style="display: none;" data-bind="value:profile_image">
+            </div>
+        </div>
+        <div class="profile-data-content">
+            <div class="profile-edit-line" style="margin-top: 5px;">
+                <div class="profile-edit-label-short">
+                    <label for="first_name">Nombre</label>
+                </div>
+                <div class="profile-input">
+                    <input id="first_name" type="text" class="k-input k-textbox" name="first_name"
+                           required data-bind="value:first_name">
+                </div>
+                <div class="profile-edit-label-short" style="margin-left: 5px;">
+                    <label for="last_name">Apellido</label>
+                </div>
+                <div class="profile-input">
+                    <input id="last_name" type="text" class="k-input k-textbox" name="last_name"
+                                                     required data-bind="value:last_name">
+                </div>
+            </div>
+            <div class="author-edit-line">
+                <div class="author-edit-label"><label for="description">Descripción</label></div>
+                <div class="author-edit-input" style="clear:left;">
+                    <textarea id="description" class="k-input k-textbox" name="description" rows="3"
+                              cols="300" data-bind="value:description"></textarea>
+                </div>
+            </div>
+            <div class="author-edit-line">
+                <div class="author-edit-label"><label for="biography">Biografía</label></div>
+                <div class="author-edit-input" style="clear:left;">
+                    <textarea id="biography" class="k-input k-textbox" name="biography" rows="6" cols="160"
+                              data-bind="value:biography" maxlength="{{ BIOGRAPHY_LENGTH }}"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="float-separator"></div>

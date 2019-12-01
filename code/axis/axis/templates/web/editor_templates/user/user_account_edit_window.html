@@ -1,0 +1,82 @@
+<div id="user-account-editor" class="editor-container">
+    <div class="editor-inner-content">
+        <div id="profile-img-container">
+            <div class="profile-img-title">Imagen de perfil</div>
+
+            <div id="profile-img-file-content" class="profile-img-content">
+                <img id="user-profile-image" src="{{ STATIC_URL }}img/silhouette_user.png"/><br>
+                <span id="user-profile-image-select" class="k-button unselectable-text"
+                      title="Seleccionar imagen de perfil">Seleccionar...</span>
+             </div>
+            <div id="profile-img-upload-content" class="profile-img-content">
+                <input id="profile_image" type="text" name="profile_image" data-bind="value:profile_image"  style="display: none">
+
+            </div>
+        </div>
+        <div class="editor-data-content">
+            <div class="user-edit-line">
+                <div class="user-edit-label">
+                    <label for="first_name">Nombre</label>
+                </div>
+                <div class="user-edit-input">
+                    <input id="first_name" type="text" class="k-input k-textbox" name="first_name"
+                           data-bind="value:first_name" required pattern="[a-zA-Záíéóú ]+"
+                           maxlength="{{ NAME_LENGTH }}">
+                </div>
+            </div>
+            <div class="user-edit-line">
+                <div class="user-edit-label"><label for="last_name">Apellido</label></div>
+                <div class="user-edit-input">
+                    <input id="last_name" type="text" class="k-input k-textbox" name="last_name"
+                           data-bind="value:last_name" required pattern="[a-zA-Záíéóú ]+"
+                           maxlength="{{ NAME_LENGTH }}">
+                </div>
+            </div>
+            <div class="user-edit-line">
+                <div class="user-edit-label"><label for="email">E-Mail</label></div>
+                <div class="user-edit-input">
+                    <input id="email" type="text" class="k-input k-textbox" name="email" data-bind="value:email"
+                            maxlength="{{ EMAIL_LENGTH }}">
+                </div>
+            </div>
+            <div class="user-edit-line">
+                <div class="user-edit-label"><label for="user-favorite-sections">Secciones favoritas</label></div>
+                <div class="user-edit-input" style="clear:left;">
+                    <select id="user-favorite-sections" multiple="multiple" data-placeholder="Agregar secciones..."></select>
+                </div>
+            </div>
+            <div class="user-edit-line">
+                <div class="user-edit-label"><label for="description">Descripción</label></div>
+                <div class="user-edit-input" style="clear:left;">
+                    <textarea id="description" class="k-input k-textbox" name="description" rows="3" cols="300"
+                              data-bind="value:description"></textarea>
+                </div>
+            </div>
+            <div class="user-edit-line">
+                <div class="user-edit-label"><label for="biography">Biografía</label></div>
+                <div class="user-edit-input" style="clear:left;">
+                    <textarea id="biography" class="k-input k-textbox" name="biography" rows="6" cols="160"
+                              data-bind="value:biography" maxlength="{{ BIOGRAPHY_LENGTH }}"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="user-account-edit-buttons">
+        <a id="add-tag-window-ok-btn" class="k-button k-grid-edit k-button-no-text" title="Editar registro">
+            <span class="k-icon k-update"></span>
+        </a>
+        <a id="add-tag-window-cancel-btn" class="k-button k-grid-edit k-button-no-text" title="Editar registro">
+            <span class="k-icon k-cancel"></span>
+        </a>
+    </div>
+</div>
+<div class="float-separator"></div>
+<script type="text/javascript">
+    var favoriteSectionsMultiselectData = [
+        {text: "Seccion A", value:"1"},
+        {text: "Seccion B", value:"2"}
+    ];
+    var favoriteSectionsMultiselect = $("#user-favorite-sections").kendoMultiSelect({
+        dataTextField: "text", dataValueField: "value", dataSource: favoriteSectionsMultiselectData
+    }).data("kendoMultiSelect");
+</script>

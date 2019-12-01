@@ -1,0 +1,234 @@
+<div class="admin-tab-section-title">Usuarios</div>
+<div id="users-grid"></div>
+<script id="user_popup_editor" type="text/x-kendo-template">
+    {% include "web/editor_templates/user/user_popup_editor.html" %}
+</script>
+<script type="text/javascript">
+    var TEMP_PROFILE_IMG_URL = {{ MEDIA_URL }} + "/temp/profile_images/";
+    var STATIC_IMG = "/axis/static/img/";
+    var PROFILE_IMG_URL = {{ MEDIA_URL }} + "/profile_images/";
+    function onSelect_userProfileAdminImgUpload(e) {
+        var files = e.files;
+        $.each(files, function () {
+            var ext = this.extension.toLowerCase();
+            if (ext != ".jpeg" && ext != ".jpg" && ext != ".png" && ext != ".bmp" && ext != ".gif") {
+                alert("Seleccione un archivo de imágen (*.jpeg, *.jpg, *.png, *.bmp, *.gif)");
+                e.preventDefault();
+            }
+        });
+    }
+    function onSuccess_userProfileImgUpload(e){
+        var userPopupEditor = $("#user-popup-editor");
+        var fileRoute = TEMP_PROFILE_IMG_URL + e.response;
+        userPopupEditor.find("#profile-img").attr("src", "").attr("src", fileRoute + "#" + new Date().getTime());
+        var obj = userPopupEditor.find("#profile-img-path");
+        obj.text(e.response);
+        obj.val(e.response);
+    }
+    function configUserEditor(e) {
+        var editorWindow = $(e.container).parent();
+        var userPopupEditor = editorWindow.find("#user-popup-editor");
+        var windowTitle = editorWindow.find(".k-window-title");
+        var updateButton = editorWindow.find(".k-button.k-button-icontext.k-grid-update");
+        var cancelButton = editorWindow.find(".k-button.k-button-icontext.k-grid-cancel");
+        var uploadImageBtn = editorWindow.find("#profile-img-select");
+        editorWindow.find(".k-i-close").remove();
+        if (e.model.isNew())windowTitle.text("Nuevo Usuario");
+        else windowTitle.text("Editar usuario");
+        updateButton.removeClass("k-button-icontext").html('<span class="k-icon k-update"></span>');
+        cancelButton.removeClass("k-button-icontext").html('<span class="k-icon k-cancel"></span>');
+        uploadImageBtn.kendoUpload({
+            localization: $.kendoHelper.uploadLocalization,
+            async: {
+                saveUrl: "{% url 'web.users.upload_profile_image' %}",
+                autoUpload: true
+            },
+            success: onSuccess_userProfileImgUpload,
+            multiple: false,
+            showFileList: false,
+            select: onSelect_userProfileAdminImgUpload
+        });
+        if (!e.model.isNew()) editorWindow.find("#password-box").remove();
+        var validator = userPopupEditor.data("kendoValidator");
+        if (validator === null || validator === undefined){
+            userPopupEditor.kendoValidator({
+            rules: {
+                validOldPassword: function(input){
+                    if (input.is("[id=email]")) {
+                        var email = $(input).val();
+                        var userPopupEditorValid = true;
+                        var authUserId = parseInt($("#user-popup-editor").find("#auth-user-id").val());
+                        $.ajax({
+                            url: "{% url 'web.users.verify_email_exists' %}",
+                            type: "post", dataType: "json", async: false,
+                            data: { email: email, auth_user_id : authUserId },
+                            success: function(data) { userPopupEditorValid = data; }
+                        });
+                        return userPopupEditorValid;
+                    }
+                    return true;
+                }
+            },
+            messages: {
+                validOldPassword: "E-Mail no disponible o no válido",
+                required: "Campo requerido"
+            }
+        });
+        }
+
+    }
+    function cleanUserProfileImg(e){
+        var window = $("#user-popup-editor").closest(".k-window");
+        var emptySilhouete = STATIC_IMG + "silhouette_user.png";
+        window.find("#profile-img").attr("src", "").attr("src", emptySilhouete + "#" + new Date().getTime());
+        window.find("#profile-img-path").val("clean");
+        $.ajax({
+            url: "{% url 'web.users.clean_tmp_profile_img' %}",
+            type: "post",
+            success: function (){
+                window.find(".k-upload-status").html('Imágen eliminada<span class="k-icon k-i-tick">Imágen eliminada</span>');
+            }
+        });
+    }
+    function onEdit_UsersGrid(e) {
+        configUserEditor(e);
+        var window = $(e.container).parent();
+        var model = e.model;
+        var userPopupEditor = $("#user-popup-editor");
+        /* IMAGE SET */
+        var imgUrl = STATIC_IMG + "silhouette_user.png" + "#" + new Date().getTime();
+        var imgInputVal = "clean";
+        if (model.profile_image_path !== undefined && model.profile_image_path.length !== 0) {
+            imgUrl = PROFILE_IMG_URL + model.profile_image_path + "#" + new Date().getTime();
+            imgInputVal = model.profile_image_path;
+        }
+        window.find("#profile-img-path").val(imgInputVal);
+        window.find("#profile-img").attr("src", imgUrl);
+        /* IMAGE SET */
+        userPopupEditor.find("#profile-image-clean").show().click(cleanUserProfileImg);
+    }
+    function onSave_UsersGrid(e) {
+        // En edicion (id != 0), guardar siempre
+        // para evitar problemas con las imagenes de perfil
+        var userPopupEditor = $("#user-popup-editor");
+        var imgPathInput = userPopupEditor.find("#profile-img-path");
+        e.model.dirty = true;
+        e.model.profile_image_path = imgPathInput.val();
+        if (!userPopupEditor.data("kendoValidator").validate(userPopupEditor.find("#email"))){
+            userPopupEditor.data("kendoValidator").validate();
+            e.preventDefault();
+        }
+    }
+    function onDataBound_UsersGrid(e){
+    }
+    $(document).ready(function () {
+        var usersDataSource = new kendo.data.DataSource({
+            transport: {
+                read: { url: "{% url 'web.users.load_users' %}", dataType: "json" },
+                create: { url: "{% url 'web.users.insert_user' %}", dataType: "json" },
+                update: { url: "{% url 'web.users.update_user' %}", dataType: 'json' },
+                destroy:{ url: "{% url 'web.users.delete_user' %}", dataType:"json" }
+            },
+            pageSize: 8,
+            schema: {
+                model: {
+                    id: "user_profile_id",
+                    fields: {
+                        user_profile_id: { type: "number", validation: {required: false}},
+                        auth_user_id: { type: "number", validation: {required: false}},
+                        first_name: { type: "string", validation: { required: { message:"Campo requerido" } } },
+                        last_name: { type: "string", validation: { required: { message:"Campo requerido" } } },
+                        profile_image_path: { type: "string" },
+                        biography: { type: "string" },
+                        description: { type: "string" },
+                        deleted : { type: "boolean" },
+                        email : { type: "string" },
+                        password : {
+                            type: "string",
+                            validation: {
+                                required: true,
+                                bothPasswordsEqual: function (input){
+                                    if (input.is('[id="password"]')) {
+                                        var userPopupEditor = $("#user-popup-editor");
+                                        var passwordA = userPopupEditor.find("#password").val();
+                                        var passwordB = userPopupEditor.find("#conf-password").val();
+                                        if (passwordA != passwordB){
+                                            input.attr("data-bothPasswordsEqual-msg", "Las contraseñas ingresadas no coinciden");
+                                            return false;
+                                        }
+                                    }
+                                    return true;
+                                }
+                            }
+                        },
+                        username : { type: "string" },
+                        profile_image_id : { type: "number" },
+                        is_administrator : { type: "boolean" },
+                        is_publisher : { type: "boolean" },
+                        is_reader : {
+                            type: "boolean",
+                            validation: {
+                                required: false,
+                                is_reader_validation: function (input) {
+                                    if (input.is("[name='is_reader']")) {
+                                        var window = $("#user-popup-editor").closest(".k-window");
+                                        var readerInput = input;
+                                        var publisherInput = window.find("#is_publisher");
+                                        var adminInput = window.find("#is_administrator");
+                                        if (!readerInput.is(':checked') && !publisherInput.is(':checked') && !adminInput.is(':checked')){
+                                            readerInput.attr("data-is_reader_validation-msg", "Debe seleccionar al menos un perfil de usuario");
+                                            return false;
+                                        }
+                                    }
+                                    return true;
+                                }
+                            } }
+                    }
+                }
+            }
+        });
+        $("#users-grid").kendoGrid({
+            dataSource: usersDataSource,
+            toolbar: [{
+                name:"create",
+                    text:"",
+                    imageClass:"k-icon k-add",
+                    template:$("#toolbar-icon-only-add").html()
+            }],
+            columns: [
+                { field: "last_name", title: "Apellido" },
+                { field: "first_name", title: "Nombre" },
+                { field: "email", title: "E-Mail" },
+                { field: "profile_image_path", hidden: true },
+                { command:[
+                        {name: "edit", text: { edit: "", update: "", cancel: ""}, imageClass:"k-icon k-edit",
+                            template:$("#toolbar-icon-only-edit").html()},
+                        {name: "destroy", text: "", imageClass:"k-icon k-delete",
+                            template:$("#toolbar-icon-only-delete").html()}
+                    ],
+                    title:"&nbsp;", width:"91px"
+                }
+            ],
+            editable: {
+                mode: "popup",
+                template: kendo.template($("#user_popup_editor").html()),
+                confirmation: "¿Esta seguro de eliminar el registro?"
+            },
+            filterable: {
+                extra: false,
+                operators: { string: $.kendoHelper.gridFilterableStrOperators },
+                messages: $.kendoHelper.gridFilterableMessages
+            },
+			pageable: {
+                pageSize: 8, refresh: true,
+                messages: $.kendoHelper.gridPageableMessages
+            },
+            sortable: true,
+            selectable: true,
+            edit: onEdit_UsersGrid,
+            save: onSave_UsersGrid,
+            dataBound: onDataBound_UsersGrid
+        });
+
+    });
+</script>

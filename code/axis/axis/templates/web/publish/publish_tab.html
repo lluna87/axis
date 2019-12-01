@@ -1,0 +1,56 @@
+{% block extrascript %}{% endblock %}
+<div id="#publish-tab-content" >
+    <div id="publish-side-menu" class="side-menu">
+        <div id="articles-menu-button" class="side-button">Artículos</div>
+        <div id="authors-menu-button" class="side-button">Autores</div>
+        <div id="polls-menu-button" class="side-button">Encuestas</div>
+    </div>
+    <div id="publish-content">
+        <div id="publish-articles-content" class="publish-content">
+            {% include  "web/publish/publish_articles.html" %}
+        </div>
+        <div id="publish-authors-content" class="publish-content">
+            {% include  "web/publish/publish_authors.html" %}
+        </div>
+        <div id="publish-polls-content" class="publish-content">
+            {% include  "web/publish/publish_polls.html" %}
+        </div>
+        <div class="float-separator"></div>
+    </div>
+    <div class="float-separator"></div>
+</div>
+<script>
+    function publishSideButtonClick(e){
+        var eventButton = $(e.currentTarget);
+        var buttons = $("#publish-side-menu").find(".side-button");
+        buttons.removeClass("side-button-selected");
+        eventButton.addClass("side-button-selected");
+        var buttonId = eventButton.attr("id");
+        $(".publish-content").css("display", "none");
+        switch (buttonId){
+            case "articles-menu-button":
+                $("#publish-articles-content").fadeToggle();
+                break;
+            case "authors-menu-button":
+                $("#publish-authors-content").fadeToggle();
+                break;
+            case "polls-menu-button":
+                $("#publish-polls-content").fadeToggle();
+                break;
+            default:
+                alert("Error: El botón no tiene acción asociada.");
+                break;
+        }
+    }
+    function documentReadyAction(){
+        var buttons = $("#publish-side-menu").find(".side-button");
+        $(buttons).each(function(){
+            button = this;
+            $(button).click(publishSideButtonClick);
+        });
+        var articlesSideMenu = $("#articles-menu-button");
+        articlesSideMenu.trigger("click");
+        $("#articles-menu-button").trigger("click");
+    }
+    $(document).ready(documentReadyAction);
+</script>

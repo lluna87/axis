@@ -1,0 +1,202 @@
+<div id="comment-block-template" style="display:none;">
+    {% include "web/utils/comment_block_template.html" %}
+</div>
+{% include "web/utils/comment_delete_confirm_win.html" %}
+{% include "web/utils/comment_mod_confirm_win.html" %}
+<script type="application/javascript">
+    var commentDelConfirm = $("#comment-delete-confirm");
+    var commentDelWin = commentDelConfirm.kendoWindow({
+        actions: {},
+        resizable: false,
+        title: "Eliminar comentario",
+        modal:true,
+        visible:false
+    }).data("kendoWindow");
+
+    var commentModConfirm = $("#comment-mod-confirm");
+    var commentModWin = commentModConfirm.kendoWindow({
+        actions: {},
+        resizable: false,
+        title: "Moderar comentario",
+        modal:true,
+        visible:false
+    }).data("kendoWindow");
+
+    function commentDeleteOk(){
+        commentDelConfirm.find(".content").hide();
+        commentDelConfirm.find(".working-content").show();
+        var commentId = parseInt(commentDelConfirm.find(".comment-id").html());
+        var articleId = parseInt("{{ article.article_id }}")
+        $.ajax({
+            url: '{% url "web.articles.delete_comment" %}',
+            type: 'POST',
+            data: { article_id: articleId, comment_id: commentId },
+            success: function (result){
+                if (result){
+                    var commentBlock = $("#comment_" + commentId);
+                    commentBlock.fadeToggle("slow", function (){
+                        commentBlock.remove();
+                        commentDelWin.close();
+                    });
+                }
+            }
+        });
+    }
+    function commentDeleteCancel(){
+        commentDelWin.close();
+    }
+    function onClick_delCommentButton(e){
+        commentDelConfirm.find("#comment-del-win-ok-btn").click(commentDeleteOk);
+        commentDelConfirm.find("#comment-del-win-cancel-btn").click(commentDeleteCancel);
+
+        var commentBlock = $(e.currentTarget).closest(".article-comment");
+        var commentData = commentBlock.find(".comment-data").html();
+        commentDelConfirm.find(".comment-data").html(commentData);
+
+        commentDelConfirm.find(".content").show();
+        commentDelConfirm.find(".working-content").hide();
+        commentDelWin.center().open();
+        return false;
+    }
+    function commentModOk(){
+        commentModConfirm.find(".content").hide();
+        commentModConfirm.find(".working-content").show();
+        var commentId = parseInt(commentModConfirm.find(".comment-id").html());
+        $.ajax({
+            url: '{% url "web.articles.moderate_comment" %}',
+            type: 'POST',
+            data: { comment_id: commentId },
+            success: function (result){
+                if (result){
+                    var commentBlock = $("#comment_" + commentId);
+                    var textNode = $(commentBlock.find(".article-comment-text"));
+                    var commentContent = textNode.html();
+                    var modMessage = "<div class='comment-moderated'>" +
+                                "Comentario moderado por administrador (Mostrar)<\/div>";
+
+                    textNode.fadeToggle("slow", function (){
+                        commentBlock.find(".article-comment-text").html(modMessage)
+                                .append("<div class='hidden-mod-comment' style='display:none;'>" +
+                                        commentContent + "<\/div>");
+                        commentBlock.find(".article-comment-text .comment-moderated").click(function(){
+                            var display = commentBlock.find(".article-comment-text .hidden-mod-comment").css("display");
+                            if (display == "block")
+                                commentBlock.find(".comment-moderated").html("Comentario moderado por administrador (Mostrar)");
+                            else
+                                commentBlock.find(".comment-moderated").html("Comentario moderado por administrador (Ocultar)");
+                            commentBlock.find(".article-comment-text .hidden-mod-comment").slideToggle();
+                        });
+                        textNode.slideToggle();
+                        commentModWin.close();
+                    });
+
+                }
+            }
+        });
+    }
+    function commentModCancel(){
+        commentModWin.close();
+    }
+    function onClick_modCommentButton(e){
+        commentModConfirm.find("#comment-mod-win-ok-btn").click(commentModOk);
+        commentModConfirm.find("#comment-mod-win-cancel-btn").click(commentModCancel);
+
+        var commentBlock = $(e.currentTarget).closest(".article-comment");
+        var commentData = commentBlock.find(".comment-data").html();
+        commentModConfirm.find(".comment-data").html(commentData);
+
+        commentModConfirm.find(".content").show();
+        commentModConfirm.find(".working-content").hide();
+        commentModWin.center().open();
+        return false;
+    }
+    function loadComments(articleId, lastId, afterLoadCallback){
+        $.ajax({
+            url: '{% url "web.articles.load_comments" %}',
+            type: 'POST',
+            data: { article_id:articleId, last_id: lastId },
+            success: function (data){
+                var commentsBlock = $("#article-read-published-comments");
+                var commentCount = 0;
+                if (data.length > 0){
+                    $(data).each(function (){
+                        var comment = this;
+                        var newCommentBlock = $("#comment-block-template").find(".article-comment").clone();
+                        newCommentBlock.attr("id", "comment_" + comment.comment_id);
+                        newCommentBlock.find(".comment-id").html(comment.comment_id);
+                        if (commentCount % 2 === 0)
+                            newCommentBlock.addClass("comment-block-even");
+                        else
+                            newCommentBlock.addClass("comment-block-uneven");
+                        var img = newCommentBlock.find(".article-comment-user-img img");
+
+                        if (comment.user_profile_img_path != "")
+                            $(img).attr("src", comment.user_profile_img_path);
+                        newCommentBlock.find(".article-comment-user-name").html(comment.user_profile_display);
+                        var modMessage = "<div class='comment-moderated'>" +
+                                "Comentario moderado por administrador (Mostrar)<\/div>";
+                        if(comment.moderated)
+                        {
+                            newCommentBlock.find(".article-comment-text").html(modMessage)
+                                    .append("<div class='hidden-mod-comment' style='display:none;'>" +
+                                            comment.content + "<\/div>");
+                            newCommentBlock.find(".article-comment-text .comment-moderated").click(function(){
+                                var display = newCommentBlock.find(".article-comment-text .hidden-mod-comment").css("display");
+                                if (display == "block")
+                                    newCommentBlock.find(".comment-moderated").html("Comentario moderado por administrador (Mostrar)");
+                                else
+                                    newCommentBlock.find(".comment-moderated").html("Comentario moderado por administrador (Ocultar)");
+                                newCommentBlock.find(".article-comment-text .hidden-mod-comment").slideToggle();
+                            });
+                        }
+                        else newCommentBlock.find(".article-comment-text").html(comment.content);
+                        var userId;
+                        {% if user.is_authenticated %}
+                            userId = parseInt({{ user.id }});
+                        {% else %}
+                            userId = -1;
+                        {% endif %}
+                        if (comment.user_id != userId)
+                            newCommentBlock.find(".comment-delete-btn").remove();
+                        if ((userIsAdmin !== undefined && !userIsAdmin) || (comment.user_id == userId))
+                            newCommentBlock.find(".comment-moderate-btn").remove();
+                        commentCount += 1;
+                        commentsBlock.append(newCommentBlock);
+                    });
+                }
+                else {
+                    var message = "<div class='empty-comments-message k-block k-success-colored'>" +
+                            "<span>No se registraron comentarios<\/span><\/div>";
+                    commentsBlock.empty().html(message);
+                }
+                if (afterLoadCallback !== undefined && typeof afterLoadCallback === "function") afterLoadCallback();
+            }
+        });
+    }
+    function addCommentHandlers(){
+        $(".comment-delete-btn").click(onClick_delCommentButton);
+        $(".comment-moderate-btn").click(onClick_modCommentButton);
+    }
+    $(document).ready(function () {
+        var articleId = {{ article.article_id }};
+        var lastId = 0;
+        loadComments(articleId, lastId, addCommentHandlers);
+        var keyHandler = function() {
+            $(this).textMaxLength();
+            $(this).printCharCount("#comment-char-count span.count");
+            var charCountBlock = $("#comment-char-count");
+            if (charCountBlock !== undefined){
+                var charCount = parseInt(charCountBlock.find("span.count").html());
+                if (charCount == {{ COMMENT_LENGTH }}){
+                    charCountBlock.find("span.nro").css("font-weight", "bold").css("color", "red");
+                }
+                else{
+                    charCountBlock.find("span.nro").css("font-weight", "normal").css("color", "black");
+                }
+            }
+        };
+        var newCommentTextarea = $("#new-comment-textarea");
+        newCommentTextarea.keyup(keyHandler);
+        newCommentTextarea.keydown(keyHandler);
+    });
+</script>

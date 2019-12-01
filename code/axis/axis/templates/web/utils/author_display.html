@@ -1,0 +1,40 @@
+<div id="author-editor" class="editor-container">
+    <div class="editor-inner-content">
+        <div id="profile-img-container">
+            <div class="profile-img-title">Imagen de perfil</div>
+            <div id="profile-img-file-content" class="profile-img-content">
+                <img id="profile-img" class="profile-img" src="{{ STATIC_URL }}img/silhouette_user.png"/><br>
+            </div>
+        </div>
+        <div class="profile-data-content">
+            <div class="profile-edit-line" style="margin-top: 5px;">
+                <div class="profile-edit-label-short">
+                    <label for="first_name">Nombre</label>
+                </div>
+                <div class="profile-input">
+                    <input id="first_name" type="text" class="k-input k-textbox" readonly="readonly" />
+                </div>
+                <div class="profile-edit-label-short" style="margin-left: 5px;">
+                    <label for="last_name">Apellido</label>
+                </div>
+                <div class="profile-input">
+                    <input id="last_name" type="text" class="k-input k-textbox" readonly="readonly"/>
+                </div>
+            </div>
+            <div class="author-edit-line">
+                <div class="author-edit-label"><label for="description">Descripción</label></div>
+                <div class="author-edit-input" style="clear:left;">
+                    <textarea id="description" class="k-input k-textbox" rows="3" cols="300"  readonly="readonly"></textarea>
+                </div>
+            </div>
+            <div class="author-edit-line">
+                <div class="author-edit-label"><label for="biography">Biografía</label></div>
+                <div class="author-edit-input" style="clear:left;">
+                    <textarea id="biography" class="k-input k-textbox" rows="6" cols="160"  readonly="readonly"
+                            maxlength="{{ BIOGRAPHY_LENGTH }}"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="float-separator"></div>

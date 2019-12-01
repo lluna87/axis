@@ -1,0 +1,242 @@
+<div id="article-read-display">
+    <div id="article-read-content">
+        {% with article_data as article_data %}
+            {% include "web/reading/article_read_content.html" %}
+        {% endwith %}
+    </div>
+    <!-- Article Info Block  -->
+    <div id="article-read-info" class="k-block k-info-colored">
+        <div class="article-read-info">
+            <div class="bordered-bottom">
+                <span class="field-title-visits">Visitas {{ article.visits }}</span>
+                <div class="float-separator"></div>
+            </div>
+            <div class="article-read-points bordered-bottom">
+                <span class="field-title">Valoracion de artículo</span>
+                <div class="field-points">
+                    <span id="1" class="article-value" title="Valorar"></span>
+                    <span id="2" class="article-value" title="Valorar"></span>
+                    <span id="3" class="article-value" title="Valorar"></span>
+                    <span id="4" class="article-value" title="Valorar"></span>
+                    <span id="5" class="article-value" title="Valorar"></span>
+                    <div class="float-separator"></div>
+                </div>
+                <div class="float-separator"></div>
+            </div>
+            <div class="article-read-info-publisher bordered-bottom">
+                <div class="article-read-info-profile-img k-block k-inset">
+                    <img src="{{ STATIC_URL }}img/silhouette_author.png" class="profile-img"/>
+                </div>
+                <div class="article-read-info-publisher-data">
+                    <span class="field-title">Publicador</span>
+                    <span id="view-publisher-display" onclick="onClick_userDetail(this)">
+                        {{ article_data.publisher_display }}
+                    </span>
+                    <span class="field-title">Valoracion</span>
+                    <div class="field-points">
+                        <span id="1" class="publisher-value"></span>
+                        <span id="2" class="publisher-value"></span>
+                        <span id="3" class="publisher-value"></span>
+                        <span id="4" class="publisher-value"></span>
+                        <span id="5" class="publisher-value"></span>
+                        <div class="float-separator"></div>
+                    </div>
+                </div>
+                <div class="float-separator"></div>
+            </div>
+            <div  class="article-read-info-author">
+                <div class="article-read-info-profile-img k-block k-inset">
+                    <img src="{{ STATIC_URL }}img/silhouette_author.png" class="profile-img" />
+                </div>
+                <div class="article-read-info-publisher-data">
+                    <span class="field-title">Autor</span>
+                    <span id="view-author-display" onclick="onClick_authorDetail(this)">
+                        {{ article_data.author_display }}
+                    </span>
+                    <span class="field-title">Valoracion</span>
+                    <div class="field-points">
+                        <span id="1" class="author-value"></span>
+                        <span id="2" class="author-value"></span>
+                        <span id="3" class="author-value"></span>
+                        <span id="4" class="author-value"></span>
+                        <span id="5" class="author-value"></span>
+                        <div class="float-separator"></div>
+                    </div>
+                </div>
+                <div class="float-separator"></div>
+            </div>
+        </div>
+    </div>
+    <div id="suggested-articles" class="suggested-article k-block k-info-colored">
+        <div class="bordered-bottom">
+                <span class="field-title-suggested">Articulos sugeridos</span>
+                <div class="float-separator"></div>
+        </div>
+        <div id="links" class="hidden"></div>
+        <div id="loading"></div>
+        <div class="float-separator"></div>
+    </div>
+</div>
+<div class="float-separator"></div>
+{% include "web/utils/author_display.html" %}
+{% include "web/utils/user_display.html" %}
+<script type="application/javascript">
+    var TEMP_PROFILE_IMG_URL = {{ MEDIA_URL }} + "/temp/profile_images/";
+    var STATIC_IMG = "/axis/static/img/";
+    var PROFILE_IMG_URL = {{ MEDIA_URL }} + "/profile_images/";
+    var AUTHOR_GRID_EDITOR_DATA = {};
+
+    var authorDetail = $("#author-editor");
+    var authorDetailWindow = authorDetail.kendoWindow({
+        title: "Autor",
+        modal:true,
+        visible: false
+    }).data("kendoWindow");
+    ////////////////////////////////
+    var userDetail = $("#user-popup-editor");
+    var userDetailWindow = userDetail.kendoWindow({
+        title: "Publicador",
+        modal:true,
+        visible: false
+    }).data("kendoWindow");
+    ////////////////////////////////
+    function fillAuthorDisplay(author){
+        if (!author.use_existing_user)
+            authorDetail.find("#use-existing-user-check").attr("checked", true);
+        authorDetail.find("#first_name").val(author.first_name);
+        authorDetail.find("#last_name").val(author.last_name);
+        authorDetail.find("#description").val(author.description);
+        authorDetail.find("#biography").val(author.biography);
+    }
+    function onClick_authorDetail(object){
+        var authorId = parseInt({{ article_data.author_id }});
+        $.ajax({
+                url: '{% url "web.authors.load" %}',
+                type: 'POST',
+                data: { author_id: authorId },
+                success: function(author){
+                    if (author !== false){
+                        fillAuthorDisplay(author);
+                        authorDetailWindow.center().open();
+                    }
+                }
+            });
+    }
+    function fillUserDisplay(userProfile){
+        userDetail.find("#first_name").val(userProfile.first_name);
+        userDetail.find("#last_name").val(userProfile.last_name);
+        userDetail.find("#biography").val(userProfile.biography);
+        userDetail.find("#profile-img").attr("src", PROFILE_IMG_URL + userProfile.profile_image_path);
+        if (userProfile.is_administrator) userDetail.find("#is_administrator").attr("checked", true);
+        if (userProfile.is_publisher) userDetail.find("#is_publisher").attr("checked", true);
+        if (userProfile.is_reader) userDetail.find("#is_reader").attr("checked", true);
+    }
+    function onClick_userDetail(object){
+        var pubUserProfileId = parseInt({{ article_data.pub_user_profile_id }});
+        $.ajax({
+            url: '{% url "web.users.load_user" %}',
+            type: 'POST',
+            data: { user_profile_id: pubUserProfileId },
+            success: function(userProfile){
+                if (userProfile !== false){
+                    fillUserDisplay(userProfile);
+                    userDetailWindow.center().open();
+                }
+            }
+        });
+    }
+    function onClick_articleValue(event){
+        var element = this;
+        var value = parseInt($(element).attr("id"));
+        if (!isNaN(value) && value >=1 && value<=5){
+            var articleId = parseInt({{ article.article_id }});
+            $.ajax({
+                url: '{% url "web.articles.value" %}',
+                type: 'POST',
+                data: { value: value, article_id: articleId },
+                success: function(e){
+                    var articleValueList = $(".article-value");
+                    articleValueList.unbind("click").removeClass("span-votable").removeClass("rate").removeAttr("title");
+                    articleValueList.each(function (){
+                        var spanId  = parseInt($(this).attr("id"));
+                        if (!isNaN(spanId) && !isNaN(e.article_value) && spanId <= e.article_value){
+                            $(this).addClass("rated");
+                        }
+                    });
+                    $(".publisher-value").each(function (){
+                        var spanId  = parseInt($(this).attr("id"));
+                        if (!isNaN(spanId) && !isNaN(e.publisher_value) && spanId <= e.publisher_value){
+                            $(this).addClass("rated");
+                        }
+                    });
+                    $(".author-value").each(function (){
+                        var spanId  = parseInt($(this).attr("id"));
+                        if (!isNaN(spanId) && !isNaN(e.author_value) && spanId <= e.author_value){
+                            $(this).addClass("rated");
+                        }
+                    });
+                }
+            });
+        }
+    }
+    function loadSuggestedArticles(){
+        var suggestedArticlesBlock = $("#suggested-articles");
+        suggestedArticlesBlock.find("#loading").setLoadingMask();
+        var articleId = parseInt({{ article.article_id }});
+        $.ajax({
+            url: '{% url "web.articles.load_suggested_articles" %}',
+            type: 'POST',
+            data: { actual_article_id: articleId },
+            success: function (articles){
+                $(articles).each(function(){
+                    var articleBlock = $.GuiHelper.getSuggestedArticleBlock(this);
+                    suggestedArticlesBlock.find("#links").append(articleBlock);
+                });
+                suggestedArticlesBlock.find("#loading").empty();
+                suggestedArticlesBlock.find("#links").slideDown();
+            }
+        });
+    }
+    loadSuggestedArticles();
+    $(document).ready(function(){
+        var articleId = parseInt({{ article.article_id }});
+        var articleValueIcons = $(".article-value");
+        var authorValueIcons = $(".author-value");
+        var authorImage = $(".article-read-info-author").find("img");
+        var publisherValueIcons = $(".publisher-value");
+        var publisherImage = $(".article-read-info-publisher").find("img");
+        {% if user.is_authenticated %}
+            {% if is_reader and not article_data.user_rated_article and article_data.pub_user_id != user.id and article_data.pub_user_id != user.id and article_data.author_user_id != user.id %}
+                articleValueIcons.click(onClick_articleValue).addClass("span-votable");
+            {% endif %}
+        {% endif %}
+        var articleValue = parseInt({{ article_data.value }});
+        articleValueIcons.each(function (){
+            var spanValue  = parseInt($(this).attr("id"));
+            if (!isNaN(spanValue) && !isNaN(articleValue) && spanValue <= articleValue)
+                $(this).addClass("rated");
+        });
+        var authorValue = parseInt({{ article_data.author_value }});
+        authorValueIcons.each(function (){
+            var spanValue  = parseInt($(this).attr("id"));
+            if (!isNaN(spanValue) && !isNaN(authorValue) && spanValue <= authorValue)
+                $(this).addClass("rated");
+        });
+        var authorImgUrl = "{{ article_data.author_image }}";
+        if (authorImgUrl !== ""){
+            authorImage.attr("src", "{{ article_data.author_image }}");
+        }
+
+        var publisherValue = parseInt({{ article_data.publisher_value }});
+        publisherValueIcons.each(function (){
+            var spanValue  = parseInt($(this).attr("id"));
+            if (!isNaN(spanValue) && !isNaN(publisherValue) && spanValue <= publisherValue)
+                $(this).addClass("rated");
+        });
+        var publisherImgUrl = "{{ article_data.publisher_image }}";
+        if (publisherImgUrl !== ""){
+            publisherImage.attr("src", "{{ article_data.publisher_image }}");
+        }
+
+    });
+</script>

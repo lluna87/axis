@@ -1,0 +1,13 @@
+{% load static %}
+{% block extrastyle %}
+{% endblock %}
+<div class="news-listview-content news-block">
+    <div class="section-news-tab-listview"></div>
+    <div class="section-news-tab-pager" class="k-pager-wrap"></div>
+</div>
+<script type="text/javascript">
+    var sectionNewsTimer;
+    $(document).ready(function () {
+        configSectionNewsTab({{ section_id }});
+    });
+</script>

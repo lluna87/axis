@@ -1,0 +1,25 @@
+{% extends "web/shared/base.html" %}
+{% load static %}
+{% block title %}Búsqueda de artículos{% endblock %}
+{% block content %}
+    {% include "web/shared/header.html" %}
+    <div class="content-centered">
+        <div id="article-search-tabstrip-block">
+            <ul>
+                <li class="k-state-active">Búsqueda</li>
+            </ul>
+        </div>
+    </div>
+    <div class="float-separator"></div>
+    <script type="text/javascript">
+        $("#article-search-tabstrip-block").kendoTabStrip({
+            animation: { open: { effects: "fadeIn"} },
+            contentUrls: [
+                "{% url 'web.articles.search_content' %}"
+                {% if search_term and search_prefilter %}
+                        + "?term={{ search_term }}&prefilter={{ search_prefilter }}"
+                {% endif %}
+            ]
+        });
+    </script>
+{% endblock %}

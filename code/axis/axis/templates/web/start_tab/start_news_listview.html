@@ -1,0 +1,75 @@
+{% load static %}
+{% block extrastyle %}
+{% endblock %}
+<div class="news-listview-content">
+    <div id="start-news-listview"></div>
+    <div id="start-news-pager" class="k-pager-wrap"></div>
+</div>
+<script type="text/javascript">
+    var startNewsTimer;
+    $(document).ready(function () {
+        function onDataBinding_StartListView(e){
+            if (e.items !== undefined && e.items.length > 0){
+                // Se limpia texto de codigo html
+                var item = e.items[0];
+                var title = item.title;
+                var content = item.content_summary;
+                item.title = $('<div>').append(title).text();
+                item.content_summary = $('<div>').append(content).text();
+            }
+        }
+        // Listview Timer
+        function getNextStartNewsPage(){
+            if (startNewsPager !== undefined){
+                var totalPages = startNewsPager.totalPages();
+                var currentPage = startNewsPager.page();
+                if (currentPage == totalPages) startNewsPager.page(1);
+                else if (currentPage > 0 && currentPage < totalPages) startNewsPager.page(currentPage + 1)
+            }
+        }
+        function onDataBound_StartListView(e){
+            $(e.sender.element).find(".news-preview-text").click(onClick_startArticlePreview);
+            if (e.sender.dataSource.data().length <= 0)
+                $("#start-news-listview").html("No existen articulos disponibles.").css("min-height", "5px");
+        }
+        var startPagerDataSource = new kendo.data.DataSource({
+            schema: { model: {
+                    id: "article_id",
+                    fields: {
+                        article_id: { type: "number" },
+                        image_path: { type: "string" },
+                        title: { type: "string" },
+                        content_summary: { type: "string" },
+                        sections_display: { type: "string" }
+                    }
+                }
+            },
+            refresh: true,
+            pageSize: 1
+        });
+        function startListViewTimerFunction(){
+            getNextStartNewsPage();
+        }
+        var startNewsPager = $("#start-news-pager").kendoPager({
+            dataSource: startPagerDataSource,
+            messages: $.kendoHelper.gridPageableMessages,
+            change: function (){
+                if (startNewsTimer != null){
+                    clearInterval(startNewsTimer);
+                }
+                startNewsTimer = window.setInterval( startListViewTimerFunction, 5000 );
+            }
+        }).data("kendoPager");
+        var startNewsListview = $("#start-news-listview").kendoListView({
+            dataSource: startPagerDataSource,
+            template: kendo.template($("#news-listview-template").html()),
+            dataBinding: onDataBinding_StartListView,
+            dataBound: onDataBound_StartListView
+        }).data("kendoListView");
+        function onClick_startArticlePreview(element){
+            var articleId = parseInt($(element.currentTarget).find(".start-article-preview-id").text());
+            window.location = "/models/articles/read?article_id=" + articleId;
+        }
+        startNewsTimer = window.setInterval( startListViewTimerFunction, 5000 );
+    });
+</script>

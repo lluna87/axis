@@ -1,0 +1,14 @@
+<div id="poll-editor" class="editor-container">
+    <input id="poll-id" type="text"name="poll_id" required="required" data-bind="value:poll_id" style="display: none;">
+    <div>
+        <div class="k-widget k-header poll-editor-header poll-editor-data">Información</div>
+        <div class="k-widget poll-editor-content poll-editor-data">
+            {% include "web/editor_templates/poll/poll_popup_editor_data.html" %}
+        </div>
+        <div class="k-widget k-header poll-editor-header poll-editor-choices">Opciones</div>
+        <div class="k-widget poll-editor-content hidden poll-editor-choices">
+            {% include "web/editor_templates/poll/poll_popup_editor_choices_grid.html" %}
+        </div>
+    </div>
+</div>
+<div class="float-separator"></div>

@@ -1,0 +1,21 @@
+<div id="section-{{ section_id }}-news-tab-content">
+    <div id="section-news-tab-article-content" class="news-content">
+        {% include "web/shared/section_news_tab_listview.html" %}
+        <div id="other-news-area-loading" style="display:none;"></div>
+        <div id="other-news-area" class="k-content news-block">
+            <div id="article-column-1" class="article-column bordered-right"></div>
+            <div id="article-column-2" class="article-column bordered-right bordered-left share-left-border"></div>
+            <div id="article-column-3" class="article-column bordered-left share-left-border"></div>
+            <div class="float-separator"></div>
+        </div>
+        <div class="no-article-msg"></div>
+    </div>
+    <div id="section-{{ section_id }}-news-polls-side-bar" class="news-polls-side-bar"></div>
+    <div class="float-separator"></div>
+</div>
+<script type="application/javascript">
+    $(document).ready(function(){
+        loadSectionNewsArticles({{ section_id }});
+        loadSectionNewsSidePolls({{ section_id }});
+    });
+</script>

@@ -1,0 +1,37 @@
+<script type="text/x-kendo-template" id="toolbar-icon-only-add">
+    <a class="k-button k-grid-#= name # k-grid-add k-button-no-text" title="Agregar un nuevo registro" href="\#">
+        <span class="#= imageClass #"></span>
+    </a>
+</script>
+<script type="text/x-kendo-template" id="toolbar-icon-only-edit">
+    <a id ="two-button" class="k-button k-grid-#= name # k-grid-edit k-button-no-text" title="Editar registro" href="\#">
+        <span class="#= imageClass #"></span>
+    </a>
+</script>
+<script type="text/x-kendo-template" id="toolbar-icon-only-delete">
+    <a id ="one-button" class="k-button k-grid-#= name # k-grid-delete k-button-no-text" title="Eliminar registro" href="\#">
+        <span class="#= imageClass #"></span>
+    </a>
+</script>
+<script type="text/x-kendo-template" id="toolbar-icon-only-add">
+    <a class="k-button k-grid-#= name # k-grid-add k-button-no-text" title="Agregar un nuevo registro" href="\#">
+        <span class="#= imageClass #"></span>
+    </a>
+</script>
+<script type="text/x-kendo-tmpl" id="news-listview-template">
+    <div class="preview-content">
+        <div class="preview-content-img-container">
+            <img class="preview-content-img" src="#=image_path#"/>
+        </div>
+        <div class="news-preview-text">
+            <span style="display:none;" class="start-article-preview-id">#=article_id#</span>
+            <div class="news-preview-text-title" title="Ver artículo completo">
+                <a href="/models/articles/read?article_id=#=article_id#"><span>#=title#</span></a>
+            </div>
+            <div class="float-separator"></div>
+            <div class="news-preview-text-content">
+                #= content_summary #
+            </div>
+        </div>
+    </div>
+</script>

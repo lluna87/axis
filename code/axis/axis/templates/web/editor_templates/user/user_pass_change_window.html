@@ -1,0 +1,25 @@
+<div id="user-pass-change-editor">
+    <div class="pass-change-win-line">
+        <div class="pass-change-win-label"><label for="pass-change-win-password">Contraseña</label></div>
+        <div class="pass-change-win-input">
+            <input id="pass-change-win-password" type="password" class="k-input k-textbox" name="password"
+                   data-bind="value:password" maxlength="{{ PASSWORD_LENGTH }}">
+        </div>
+    </div>
+    <div class="pass-change-win-line">
+        <div class="pass-change-win-label"><label for="pass-change-win-conf-password">Confirmar</label></div>
+        <div class="pass-change-win-input">
+            <input id="pass-change-win-conf-password" type="password" class="k-input k-textbox" name="conf_password"
+                   data-bind="value:password" maxlength="{{ PASSWORD_LENGTH }}">
+        </div>
+    </div>
+    <div class="pass-change-win-buttons">
+        <a id="pass-change-win-ok-btn" class="k-button k-grid-edit k-button-no-text" title="Editar registro">
+            <span class="k-icon k-update"></span>
+        </a>
+        <a id="pass-change-win--cancel-btn" class="k-button k-grid-edit k-button-no-text" title="Editar registro">
+            <span class="k-icon k-cancel"></span>
+        </a>
+    </div>
+</div>
+<div class="float-separator"></div>

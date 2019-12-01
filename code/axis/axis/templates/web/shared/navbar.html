@@ -1,0 +1,93 @@
+<div id="navbar" xmlns="http://www.w3.org/1999/html">
+    <div id="navbar-float-left">
+        <div id="site-home">
+            <a href="{% url 'web.main' %}" title="Ir al inicio" class="use-tooltip">
+                <img src="{{ STATIC_URL }}img/home_icon.png">
+            </a>
+        </div>
+        <div id="site-time"></div>
+        {% if user.is_authenticated %}
+            <div id="navbar-welcome-msg">Bienvenido {{ user.username }}</div>
+        {% endif %}
+    </div>
+    <div id="navbar-float-right">
+        <div id="navbar-search">
+            <span id="navbar-search-textbox" class="k-textbox" style="cursor: pointer;">
+                <input id="navbar-search-input" type="text" placeholder="Buscar..." onkeypress="searchArticleKeyPress(this, event)"/>
+            </span>
+            <input id="navbar-search-prefilter" value="0" /></input>
+            <a id="navbar-search-btn" class="k-button k-button-no-text use-tooltip" title="Buscar..." onclick="searchArticleClick(this, event)">
+                <span class="k-icon k-i-search"></span>
+            </a>
+        </div>
+        <div id="navbar-session">
+            {% if not user.is_authenticated %}
+                <ul id="session-menu">
+                    <li>Cuenta
+                        <ul>
+                            <li onclick="loginClick(this)">Iniciar sesión</li>
+                            <li><a id="go-to-registration" href="{% url 'web.register' %}">Registrarse</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            {% else %}
+                <ul id="session-menu">
+                    <li>{{ user.username }}
+                        <ul>
+                            <li><a href="{% url 'web.account_config' %}">Configurar cuenta</a></li>
+                            <li><a href="{% url 'web.password_change_page' %}">Cambiar contraseña</a></li>
+							<li><a href="{{ STATIC_URL }}admin/ayuda.pdf">Ayuda</a></li>
+                            <li><a href="{% url 'web.logout' %}">Cerrar sesión</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            {% endif %}
+        </div>
+    </div>
+    <div class="float-separator"></div>
+</div>
+<script type="text/javascript">
+    $(document).everyTime(1000, onTick);
+    onTick();
+    function onTick(e) {
+        var now = new Date();
+        var label = $('#site-time');
+        var strTime = now.toLocaleDateString() + " - " + now.toLocaleTimeString();
+        label.html(strTime);
+    }
+    var prefilterValues = [
+        {text:"Título", value:{{ NAVBAR_PREFILTER_TITLE }}},
+        {text:"Autor", value:{{ NAVBAR_PREFILTER_AUTHOR }}},
+        {text:"Publicador", value:{{ NAVBAR_PREFILTER_PUBLISHER }}}
+    ];
+    var navbarSearchPrefilter  = $("#navbar-search-prefilter").kendoDropDownList({
+        dataTextField: "text",
+        dataValueField: "value",
+        dataSource: prefilterValues,
+        index: 0
+    }).data("kendoDropDownList");
+
+    var sessionMenuUl = $("#session-menu");
+    var sessionMenu = sessionMenuUl.kendoMenu().data("kendoMenu");
+    //sessionMenuUl.css("max-height", "30px").css("margin-top", "2px");
+
+    function loginClick(e){ window.location="{% url 'web.login' %}"; }
+    function searchArticleKeyPress(origin, event){
+        var enterKey = 13;
+        if (event.keyCode == enterKey) {
+            $("#navbar-search-btn").trigger("click");
+        }
+        return false;
+    }
+    function searchArticleClick(origin, event){
+        var term = $("#navbar-search").find("#navbar-search-input").val();
+        var prefilter = navbarSearchPrefilter.value();
+        var url = "{% url 'web.articles.search' %}?";
+        if (term !== null && term != "" && prefilter !== undefined && !isNaN(prefilter)) {
+            window.location = url + "term=" + term + "&prefilter=" + prefilter;
+        }
+        return false;
+    }
+    $(document).ready(function (){
+    });
+</script>

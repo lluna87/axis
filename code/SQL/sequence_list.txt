@@ -1,0 +1,12 @@
+image_id_seq
+tag_id_seq
+article_id_seq
+publication_id_seq
+comment_id_seq
+article_rate_id_seq
+publisher_id_seq
+author_id_seq
+option_id_seq
+poll_id_seq
+section_id_seq
+user_profile_id_seq

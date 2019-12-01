@@ -1,0 +1,124 @@
+<div id="polls-tab">
+    <!-- TABSTRIP CONTENT -->
+    <div id="polls-toolbar">
+        <!-- FIRST LINE -->
+        <div  class="float-left bordered-right" style="padding-right: 10px;">
+            <!-- LEFT -->
+            <div id="polls-home-search-title">
+                <label for="polls-search-title-input">Título</label>
+                <span id="polls-home-search-textbox" class="k-textbox" style="cursor: pointer;">
+                    <input id="polls-search-title-input" type="text" placeholder="Buscar..." onkeypress="searchPollKeyPress(this, event)"/>
+                </span>
+                <label id="polls-home-search-period-label" for="polls-home-search-period-start">Validez</label>
+                <input id="polls-home-search-period-start" />
+                <input id="polls-home-search-period-end"/>
+            </div>
+            <div class="float-separator"></div>
+            <!-- SECOND LINE -->
+            <div id="polls-home-search-sections">
+                <label for="polls-home-search-sections-select">Secciones</label>
+                <select id="polls-home-search-sections-select" multiple="multiple" name="sections"
+                    data-placeholder="Agregar secciones..."></select>
+                <div id="article-edit-sections-refresh-btn" class="k-button k-grid-create k-button-no-text"
+                     title="Actualizar secciones" onclick="onClick_refreshPollsHomeSections(event)">
+                    <span class="k-icon k-i-refresh"></span>
+                </div>
+            </div>
+        </div>
+        <div class="float-left bordered-left share-left-border">
+            <a onclick="loadPolls()" title="Buscar encuestas..." class="k-button k-button-no-text" style="margin-left: 10px;">
+                <span class="k-icon k-i-search"></span>
+            </a>
+            <div id="polls-loading-img" style="margin-left: 10px;margin-top: 5px;"></div>
+        </div>
+        <div class="float-separator"></div>
+    </div>
+    <div id="poll-columns" style="display:none;">
+        <div id="poll-column-1" class="poll-column bordered-right"></div>
+        <div id="poll-column-2" class="poll-column bordered-right bordered-left share-left-border"></div>
+        <div id="poll-column-3" class="poll-column bordered-right bordered-left share-left-border"></div>
+        <div id="poll-column-4" class="poll-column bordered-left share-left-border"></div>
+    </div>
+</div>
+<div class="float-separator"></div>
+<script type="text/javascript">
+    var pollsHomeTitleInput = $("#polls-toolbar").find("#polls-search-title-input");
+
+    var pollsHomePeriodRange = $.kendoHelper.getDateTimeRangePickers("polls-home-search-period-start", "polls-home-search-period-end");
+
+    var pollsHomeSectionsMultiselect = $("#polls-home-search-sections-select").kendoMultiSelect({
+        dataTextField: "section",
+        dataValueField: "id",
+        dataSource: {
+            type: "json",
+            transport: { read: { url: "{% url 'web.sections.select_combo' %}", dataType: "json" } }
+        },
+        filter: "contains"
+    }).data("kendoMultiSelect");
+
+    function loadPolls(){
+        var loadingImg = $("#polls-loading-img");
+        loadingImg.setLoadingMask(true);
+        var columnsContainer = $("#poll-columns");
+        var titleContent = pollsHomeTitleInput.val();
+
+        var sectionIDs = [];
+        $(pollsHomeSectionsMultiselect.dataItems()).each(function (){
+            sectionIDs.push(this.id);
+        });
+
+        var dateStart = pollsHomePeriodRange.startPicker.value();
+        var dateEnd = pollsHomePeriodRange.endPicker.value();
+
+        var sendData = {
+            include_choices: true,
+            title: titleContent,
+            sections: JSON.stringify(sectionIDs),
+            period_start: dateStart,
+            period_end: dateEnd
+        };
+
+        columnsContainer.fadeOut(function (){
+            $(".poll-column").empty();
+            $.ajax({
+                url: '{% url "web.polls.load" %}',
+                type: 'GET',
+                data: sendData,
+                success: function (polls){
+                    var isReader = "{{ is_reader }}" === "True";
+                    var colCount = 1;
+                    $(polls).each(function (){
+                        var poll = this;
+                        var pollBlock = $.GuiHelper.getPollBlock(poll, isReader);
+                        $("#polls-tab").find("#poll-column-" + colCount).append(pollBlock);
+                        if (colCount < 4) {
+                          colCount += 1
+                        }
+                        else {
+                            colCount = 1;
+                        }
+                    });
+                    loadingImg.empty();
+                    $(".poll-column").each(function(){
+                        var column = $(this);
+                        (column.html()=="") ? column.hide() : column.show();
+                    });
+                    columnsContainer.fadeIn();
+                }
+            });
+        });
+    }
+    function searchPollKeyPress(origin, event){
+        var enterKey = 13;
+        if (event.keyCode == enterKey) {
+            $("#polls-search-btn").trigger("click");
+        }
+        return false;
+    }
+    function onClick_refreshPollsHomeSections(e){
+        pollsHomeSectionsMultiselect.dataSource.read();
+    }
+    $(document).ready(function (){
+        loadPolls();
+    });
+</script>

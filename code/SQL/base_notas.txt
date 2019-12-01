@@ -1,0 +1,2 @@
+El script SQL esta preparado para completar la base de datos con el usuario webmaster,
+el user profile asociado y los permisos de lector publicador y administrador.

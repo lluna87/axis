@@ -1,0 +1,454 @@
+{% load static %}
+<div class="publish-tab-section-title">Encuestas</div>
+<div id="polls-grid"></div>
+<div class="float-separator"></div>
+<!-- popup editor template -->
+<div id="poll-popup-editor" class="hidden">
+    {% include "web/editor_templates/poll/custom_poll_popup_editor.html" %}
+</div>
+<script id="multiple_choice_tpl" type="text/x-kendo-template">
+    <input type="checkbox" #= multiple_choice ? "checked=checked" : "" # disabled="disabled" ></input>
+</script>
+<script type="text/javascript">
+    $(document).ready(function () {
+        publishPollEditorWindow = $("#poll-popup-editor").kendoWindow({
+            actions: {},
+            title: "Datos de encuesta",
+            modal: true,
+            visible: false
+        }).data("kendoWindow");
+        var pollChoicesGridDataSource = new kendo.data.DataSource({
+            transport: {
+                read:   { url: "{% url 'web.choice.load' %}", dataType: "json", data:choicesGridGetData },
+                create: { url: "{% url 'web.choice.insert' %}", type:"post", dataType: "json", data:choicesGridGetData,
+                    complete: function (){
+                        pollChoicesGridDataSource.read();
+                        pollChoicesGrid.refresh();
+                    }},
+                update: { url: "{% url 'web.choice.update' %}", type:"post", dataType: 'json', data:choicesGridGetData,
+                    complete: function (){
+                        pollChoicesGridDataSource.read();
+                        pollChoicesGrid.refresh();
+                    }},
+                destroy:{ url: "{% url 'web.choice.delete' %}", type:"post", dataType:"json", data:choicesGridGetData,
+                    complete: function (){
+                        pollChoicesGridDataSource.read();
+                        pollChoicesGrid.refresh();
+                    }}
+            },
+            pageSize: 20,
+            schema: {
+                model: {
+                    id: "choice_id",
+                    fields: {
+                        choice_id: { type: "number" },
+                        text: {
+                            type: "string",
+                            validation: {
+                                required: {
+                                    message: "La opción debe tener un texto asociado"
+                                }
+                            }
+                        },
+                        deleted: { type: "boolean" }
+                    }
+                }
+            }
+        });
+        function onEdit_PollChoicesGrid(e){
+            var row = $(e.container);
+            var updateButton = row.find(".k-button.k-button-icontext.k-grid-update");
+            updateButton.removeClass("k-button-icontext");
+            updateButton.addClass("k-button-no-text");
+            updateButton.html('<span class="k-icon k-update"></span>');
+
+            var cancelButton = row.find(".k-button.k-button-icontext.k-grid-cancel");
+            cancelButton.removeClass("k-button-icontext");
+            cancelButton.addClass("k-button-no-text");
+            cancelButton.html('<span class="k-icon k-cancel"></span>');
+        }
+        function onDataBound_PollChoicesGrid(e){
+            $("#poll-popup-editor").find("#choice_count").val(e.sender.dataSource.data().length);
+        }
+        function onClick_PollGridCancel(event){
+            $(event.currentTarget).closest("#poll-popup-editor").data("kendoWindow").close();
+        }
+        function onClick_PollGridUpdate(event){
+            var editor = $(event.currentTarget).closest("#poll-popup-editor");
+            var validator = editor.find("form").data("kendoValidator");
+            if (validator.validate()){
+                var startPicker = editor.find("#voting_period_start").data("kendoDateTimePicker");
+                var endPicker = editor.find("#voting_period_end").data("kendoDateTimePicker");
+                var choicesGrid = editor.find("#poll-choices-grid").data("kendoGrid");
+                var sectionsMultiselect = editor.find("#poll-sections").data("kendoMultiSelect");
+
+                var choices = choicesGrid.dataSource.data();
+                var sections = sectionsMultiselect.dataItems();
+                var dataItem = editor.find("form").formData();
+
+                var sendChoices = [];
+                var i = 0;
+                $(choices).each(function(){
+                    sendChoices[i] = { choice_id: this.choice_id, text: this.text };
+                    i++;
+                });
+
+                var sendSections = [];
+                var x = 0;
+                $(sections).each(function(){
+                    sendSections[x] = this.id;
+                    x++;
+                });
+
+                dataItem['voting_period_start'] = startPicker.value();
+                dataItem['voting_period_end'] = endPicker.value();
+                dataItem['choices'] = JSON.stringify(sendChoices);
+                dataItem['sections'] = JSON.stringify(sendSections);
+
+                var url = dataItem.poll_id > 0 ? "{% url 'web.polls.update' %}" : "{% url 'web.polls.insert' %}";
+
+                $.ajax({
+                    url: url,
+                    dataType: "json",
+                    type: "get",
+                    data: dataItem,
+                    success: function (data){
+                        publishPollGrid.dataSource.read();
+                        publishPollGrid.refresh();
+                        publishPollEditorWindow.close();
+                    }
+                });
+            }
+        }
+        function choicesGridGetData(e){
+            var container = publishPollEditorWindow.element;
+            var pollId = parseInt(container.find("#poll-id").val());
+            if (isNaN(pollId))
+                pollId = 0;
+            return { poll_id: pollId };
+        }
+        function onDataBound_PollsGrid(e){
+            var grid = $(this.element).data("kendoGrid");
+            var isPublisher = "{{ is_publisher }}" === "True";
+            var isAdministrator = "{{ is_administrator }}" === "True";
+            $(this.element).find("tbody tr").each(function(){
+                var rowElement = this;
+                var row = $(rowElement);
+                row.find("input[type=checkbox]").parent().css("text-align", "center");
+                if (publishPollGrid !== undefined && publishPollGrid !== null){
+                    var poll = publishPollGrid.dataItem(row);
+                    if (!poll.editable){
+                        row.find(".k-icon.k-edit").parent().attr("onclick", "");
+                        row.find(".k-icon.k-edit").parent().disableGridBtn();
+                    }
+                    else if (isPublisher && !isAdministrator && poll.publisher_auth_user_id != {{ user.id }}){
+                        row.find(".k-icon.k-edit").parent().attr("onclick", "");
+                        row.find(".k-icon.k-edit").parent().disableGridBtn();
+                    }
+                }
+            });
+        }
+        function onClick_PollEditorHeader(event){
+            var pollEditor = $(event.currentTarget).closest("#poll-popup-editor");
+            var dataContent = pollEditor.find(".poll-editor-content.poll-editor-data");
+            var choicesContent = pollEditor.find(".poll-editor-content.poll-editor-choices");
+            if ($(event.target).hasClass("poll-editor-data")){
+                if (dataContent.css("display") === "none") dataContent.slideDown();
+                if (choicesContent.css("display") !== "none") choicesContent.slideUp();
+            }
+            else if ($(event.target).hasClass("poll-editor-choices")){
+                if (choicesContent.css("display") === "none") choicesContent.slideDown();
+                if (dataContent.css("display") !== "none") dataContent.slideUp();
+            }
+        }
+        function fillPollEditor(container, dataItem) {
+            var window = $(container).closest(".k-window");
+            window.find("#poll-id").val(dataItem.poll_id);
+            window.find("#voting_period_start").data("kendoDateTimePicker").value(dataItem.voting_period_start);
+            window.find("#voting_period_end").data("kendoDateTimePicker").value(dataItem.voting_period_end);
+            window.find("#title").val(dataItem.title);
+            window.find("#description").val(dataItem.description);
+            window.find("#multiple_choice").attr("checked", dataItem.multiple_choice);
+            var multiselect = window.find("#poll-sections").data("kendoMultiSelect");
+            multiselect.value([]);
+            if (dataItem.sections !== undefined && dataItem.sections !== null && dataItem.sections.length > 0)
+            {
+                var sectionValues = [];
+                $(dataItem.sections).each(function(){
+                    var section  = this;
+                    sectionValues.push(section.section_id);
+                });
+                multiselect.value(sectionValues);
+            }
+        }
+        function pollPeriodStartChange(e) {
+            var parentForm = $(e.sender.element).closest("form");
+            var start = parentForm.find("#voting_period_start").data("kendoDateTimePicker");
+            var end = parentForm.find("#voting_period_end").data("kendoDateTimePicker");
+            var startDate = start.value(), endDate = end.value();
+            if (startDate) {
+                startDate = new Date(startDate);
+                startDate.setDate(startDate.getDate());
+                end.min(startDate);
+            }
+            else if (endDate) {
+                start.max(new Date(endDate));
+            }
+            else {
+                endDate = new Date();
+                start.max(endDate);
+                end.min(endDate);
+            }
+        }
+        function pollPeriodEndChange(e) {
+            var parentForm = $(e.sender.element).closest("form");
+            var start = parentForm.find("#voting_period_start").data("kendoDateTimePicker");
+            var end = parentForm.find("#voting_period_end").data("kendoDateTimePicker");
+
+            var endDate = end.value(), startDate = start.value();
+            if (endDate) {
+                endDate = new Date(endDate);
+                endDate.setDate(endDate.getDate());
+                start.max(endDate);
+            }
+            else if (startDate) {
+                end.min(new Date(startDate));
+            }
+            else {
+                endDate = new Date();
+                start.max(endDate);
+                end.min(endDate);
+            }
+        }
+        function configPollEditor(container) {
+            $.ajax({
+                url: "{% url 'web.choice.clear_temp' %}",
+                type: "post",
+                dataType: "json"
+            });
+            var window = $(container).closest(".k-window");
+
+            var now = new Date();
+
+            window.find(".k-button.k-grid-update").unbind("click").click(onClick_PollGridUpdate);
+            window.find(".k-button.k-grid-cancel").unbind("click").click(onClick_PollGridCancel);
+
+            var startInput = window.find("#voting_period_start");
+            if (typeof startInput.data("kendoDateTimePicker") === "undefined"){
+                startInput.kendoDateTimePicker({
+                    format: "dd/MM/yyyy HH:mm",
+                    value: now,
+                    change: pollPeriodStartChange
+                });
+            }
+
+            var endInput = window.find("#voting_period_end");
+            if (typeof endInput.data("kendoDateTimePicker") === "undefined"){
+                endInput.kendoDateTimePicker({
+                    format: "dd/MM/yyyy HH:mm",
+                    value: new Date(),
+                    change: pollPeriodEndChange
+                });
+            }
+
+            var selectSections = window.find("#poll-sections");
+            if (typeof selectSections.data("kendoMultiSelect") === "undefined"){
+                selectSections.kendoMultiSelect({
+                    dataTextField: "section", dataValueField: "id", dataSource: {
+                        type: "post",
+                        transport: {
+                            read: {
+                                url: "{% url 'web.sections.select_combo' %}"
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (typeof pollChoicesGrid === "undefined"){
+                pollChoicesGrid = window.find("#poll-choices-grid").kendoGrid({
+                    dataSource: pollChoicesGridDataSource,
+                    toolbar: [{
+                        name:"create", text:"", imageClass:"k-icon k-add", template:$("#toolbar-icon-only-add").html()
+                    }],
+                    columns: [
+                        { field: "text", title: "Texto", validation: { required: true } },
+                        { command:[
+                            { name: "edit", text: { edit: "", update: "", cancel: ""}, imageClass:"k-icon k-edit",
+                                template:$("#toolbar-icon-only-edit").html() },
+                            { name: "destroy", text: "", imageClass:"k-icon k-delete",
+                                template:$("#toolbar-icon-only-delete").html() }
+                            ],
+                            title:"&nbsp;", width:"91px"
+                        }
+                    ],
+                    editable: {
+                        mode: "inline",
+                        confirmation: "¿Esta seguro de eliminar el registro?"
+                    },
+                    pageable: {
+                        pageSize: 20,
+                        refresh: true,
+                        messages: $.kendoHelper.gridPageableMessages
+                    },
+                    selectable: true,
+                    sortable: true,
+                    edit: onEdit_PollChoicesGrid,
+                    dataBound: onDataBound_PollChoicesGrid
+                }).data("kendoGrid");
+            }
+
+            pollChoicesGridDataSource.read();
+            pollChoicesGrid.refresh();
+            window.find(".poll-editor-header").unbind("click").click(onClick_PollEditorHeader);
+            window.find(".poll-editor-header.poll-editor-data").trigger("click");
+
+            var validatorForm = window.find("form");
+            if (typeof validatorForm.data("kendoValidator") === "undefined"){
+                window.find("form").kendoValidator({
+                    rules: {
+                        title: function (input) {
+                            if (input.is("[name='title']")) {
+                                if (input.val().length < 3) {
+                                    input.attr("data-name_validation-msg", "El título debe tener al menos 3 caracteres");
+                                    return false;
+                                }
+                            }
+                            return true;
+                        },
+                        choice_count: function (input){
+                            if (input.is("[name='choice_count']")) {
+                                var choiceCount = parseInt(input.val());
+                                if (choiceCount < 2) {
+                                    input.attr("data-choice_count_validation-msg",
+                                            "La encuesta debe tener al menos 2 opciones");
+                                    return false;
+                                }
+                            }
+                            return true;
+                        },
+                        sections: function (input){
+                            if (input.is("[id='poll-sections']")) {
+                                var multiselect = input.data("kendoMultiSelect");
+                                if (multiselect.dataItems().length <= 0){
+                                    return false;
+                                }
+                            }
+                            return true;
+                        }
+                    },
+                    messages: {
+                        title: "El título debe tener al menos 3 caracteres",
+                        choice_count: "La encuesta debe tener al menos 2 opciones",
+                        required: "Dato requerido",
+                        sections: "La encuesta debe tener al menos 1 sección"
+                    }
+                });
+            }
+        }
+        onClick_PollsGridEdit = function (e){
+            var eventButton = $(e);
+            var pollPopupEditor = $("#publish-polls-content").find("#poll-popup-editor");
+            var itemRow = eventButton.closest("tr");
+            var pollsGrid = eventButton.closest(".k-grid").data("kendoGrid");
+            var dataItem = pollsGrid.dataItem(itemRow);
+
+            configPollEditor(publishPollEditorWindow.element);
+            fillPollEditor(publishPollEditorWindow.element, dataItem);
+            //window.css("top", "100px");
+            publishPollEditorWindow.center().open();
+        };
+        onClick_PollsGridAdd = function (e){
+            var eventButton = $(e);
+            var pollPopupEditor = $("#publish-polls-content").find("#poll-popup-editor");
+            var itemRow = eventButton.closest("tr");
+            var pollsGrid = eventButton.closest(".k-grid").data("kendoGrid");
+            var dataItem = new $.GuiHelper.PollDataItem();
+            configPollEditor(publishPollEditorWindow.element);
+            fillPollEditor(publishPollEditorWindow.element, dataItem);
+            pollPopupEditor.closest(".k-window").css("top", "100px");
+            publishPollEditorWindow.center().open();
+        };
+        var pollsGridDataSource = new kendo.data.DataSource({
+            transport: {
+                read: { url: "{% url 'web.polls.load' %}", dataType: "json" }
+            },
+            pageSize: 20,
+            schema: {
+                model: {
+                    id: "poll_id",
+                    fields: {
+                        poll_id: { type: "number", validation: { required: false } },
+                        title: {
+                            type: "string",
+                            validation: {
+                                required: {
+                                    message:"Campo requerido"
+                                }
+                            }
+                        },
+                        description: {
+                            type: "string",
+                            validation: {
+                                required: true
+                            } },
+                        multiple_choice: { type: "boolean" },
+                        voting_period_start: { type: "datetime", validation: {required: true} },
+                        voting_period_end: { type: "datetime", validation: {required: true} }
+                    }
+                }
+            }
+        });
+        publishPollGrid = $("#polls-grid").kendoGrid({
+            dataSource: pollsGridDataSource,
+            toolbar: [{
+                name: "custom_create", template: '<a title="Agregar registro" onclick="onClick_PollsGridAdd(this)" ' +
+                        'class="k-button k-button-no-text"><span class="k-icon k-add"></span></a>'
+            }],
+            columns: [
+                { field: "title", title: "Título", validation: {required: true} },
+                { field: "multiple_choice",  title: "Opción múltiple", width: 120,
+                    validation: {required: true}, template: kendo.template($("#multiple_choice_tpl").html()) },
+                { field: "voting_period_start", title: "Comienzo",
+                    template: '#= kendo.toString(voting_period_start, "dd/MM/yyyy HH:mm") #',
+                    // format:"{0:dd/MM/yyyy HH:mm}", filterable: { ui: "datetimepicker" },
+                    filterable: false,
+                    validation: {required: true} },
+                { field: "voting_period_end", title: "Fin",
+                    template: '#= kendo.toString(voting_period_end, "dd/MM/yyyy HH:mm") #',
+                    //format:"{0:dd/MM/yyyy HH:mm}", filterable: { ui: "datetimepicker" },
+                    filterable: false,
+                    validation: {required: true} },
+                { command: [
+                    { name: "custom_edit",
+                        template: '<a title="Editar registro" onclick="onClick_PollsGridEdit(this)" ' +
+                                'class="k-button k-button-no-text" id="two-button">' +
+                                '<span class="k-icon k-edit"></span></a>' },
+                    { name: "destroy", text: "", imageClass: "k-icon k-delete",
+                        template: $("#toolbar-icon-only-delete").html() }
+                ],
+                    title: "&nbsp;", width: "91px"
+                }
+            ],
+            editable: {
+                mode: "popup",
+                confirmation: "¿Esta seguro de eliminar el registro?"
+            },
+            filterable: {
+                extra: false,
+                operators: {
+                    string: $.kendoHelper.gridFilterableStrOperators,
+                    date: $.kendoHelper.gridFilterableDateTimeOperators
+                },
+                messages: $.kendoHelper.gridFilterableMessages
+            },
+            pageable: {
+                pageSize: 20, refresh: true,
+                messages: $.kendoHelper.gridPageableMessages
+            },
+            sortable: true,
+            selectable: true,
+            dataBound: onDataBound_PollsGrid
+        }).data("kendoGrid");
+    });
+</script>

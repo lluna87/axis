@@ -1,0 +1,35 @@
+<div id="article-read-display">
+    <div id="article-read-content">
+        <div class="no-available-articles-msg">El artículo solicitado no existe</div>
+    </div>
+    <div id="suggested-articles" class="suggested-article k-block k-info-colored">
+        <div class="bordered-bottom">
+                <span class="field-title-suggested">Articulos sugeridos</span>
+                <div class="float-separator"></div>
+        </div>
+        <div id="links" class="hidden"></div>
+        <div id="loading"></div>
+        <div class="float-separator"></div>
+    </div>
+    <div class="float-separator"></div>
+</div>
+
+<script type="text/javascript">
+    function loadSuggestedArticles(){
+        var suggestedArticlesBlock = $("#suggested-articles");
+        suggestedArticlesBlock.find("#loading").setLoadingMask();
+        $.ajax({
+            url: '{% url "web.articles.load_suggested_articles" %}',
+            type: 'POST',
+            success: function (articles){
+                $(articles).each(function(){
+                    var articleBlock = $.GuiHelper.getSuggestedArticleBlock(this);
+                    suggestedArticlesBlock.find("#links").append(articleBlock);
+                });
+                suggestedArticlesBlock.find("#loading").empty();
+                suggestedArticlesBlock.find("#links").slideDown();
+            }
+        });
+    }
+    loadSuggestedArticles();
+</script>

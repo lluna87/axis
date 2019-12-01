@@ -1,0 +1,116 @@
+<div class="admin-tab-section-title">Secciones</div>
+<div id="sections-grid"></div>
+<div class="float-separator"></div>
+<script>
+    function onEdit_sectionsGrid(e) {
+        var row = $(e.container);
+        var updateButton = row.find(".k-button.k-button-icontext.k-grid-update");
+        updateButton.removeClass("k-button-icontext");
+        updateButton.addClass("k-button-no-text");
+        updateButton.html('<span class="k-icon k-update"></span>');
+
+        var cancelButton = row.find(".k-button.k-button-icontext.k-grid-cancel");
+        cancelButton.removeClass("k-button-icontext");
+        cancelButton.addClass("k-button-no-text");
+        cancelButton.html('<span class="k-icon k-cancel"></span>');
+    }
+    function onRemove_sectionsGrid(e){
+        if (e.model.has_exclusive_articles || e.model.has_exclusive_polls){
+            e.preventDefault();
+            e.sender.cancelChanges();
+            alert("No se puede eliminar la sección.\nExisten artículos o encuestas dependientes\nexclusivamente de ella.");
+        }
+    }
+    function onDataBound_sectionsGrid(e){
+        var grid = e.sender;
+        $(this.element).find("tbody tr").each(function(){
+            var rowElement = this;
+            var section = grid.dataItem(rowElement);
+            console.log(section);
+        });
+    }
+    $(document).ready(function () {
+        var publishSectionsDataSource = new kendo.data.DataSource({
+            transport: {
+                read: { url: "{% url 'web.sections.load_sections' %}", dataType: "json" },
+                create: { url: "{% url 'web.sections.insert_section' %}", dataType: "json" },
+                update: { url: "{% url 'web.sections.update_section' %}", dataType: 'json' },
+                destroy:{ url: "{% url 'web.sections.delete_section' %}", dataType:"json" }
+            },
+            pageSize: 20,
+            schema: {
+                model: {
+                    id: "section_id",
+                    fields: {
+                        name: {
+                            type: "string",
+                            validation: {
+                                name_validation: function (input) {
+                                    if (input.is("[name='name']")) {
+                                        if (input.val().length < 2)
+                                        {
+                                            input.attr("data-name_validation-msg", "El nombre de la sección debe tener al menos 2 caracteres");
+                                            return false
+                                        }
+                                        else {
+                                            result = false;
+                                            input.attr("data-name_validation-msg", "El nombre ingresado ya existe");
+                                            $.ajax({
+                                                url: '{% url "web.sections.name_exists" %}',
+                                                type: "POST",
+                                                dataType: "json",
+                                                data: { name: input.val() },
+                                                async: false,
+                                                success: function(exists) {
+                                                    // Si existe (true) no es valido,
+                                                    // devuelvo lo contrario (!true = false)
+                                                    result = !exists;
+                                                }
+                                            });
+                                            return result;
+                                        }
+                                    }
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        $("#sections-grid").kendoGrid({
+            dataSource: publishSectionsDataSource,
+            toolbar: [{ name:"create", text:"", imageClass:"k-icon k-add", template:$("#toolbar-icon-only-add").html() }],
+            columns: [
+                { field: "name", title: "Nombre" },
+                { command:[
+                    {name: "edit", text: { edit: "", update: "", cancel: ""}, imageClass:"k-icon k-edit",
+                        template:$("#toolbar-icon-only-edit").html()},
+                    {name: "destroy", text: "", imageClass:"k-icon k-delete",
+                        template:$("#toolbar-icon-only-delete").html()}
+                ],
+                    title:"&nbsp;", width:"91px"
+                }
+            ],
+            editable: {
+                mode: "inline",
+                confirmation: "¿Esta seguro de eliminar el registro?"
+            },
+            filterable: {
+                extra: false,
+                operators: { string: $.kendoHelper.gridFilterableStrOperators },
+                messages: $.kendoHelper.gridFilterableMessages
+            },
+			pageable: {
+                pageSize: 20, refresh: true,
+                messages: $.kendoHelper.gridPageableMessages
+            },
+            selectable: true,
+            sortable: true,
+            edit: onEdit_sectionsGrid,
+            remove: onRemove_sectionsGrid,
+            dataBound: onDataBound_sectionsGrid
+        });
+    });
+</script>

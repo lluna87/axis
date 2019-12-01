@@ -1,0 +1,27 @@
+<script type="text/javascript">
+    function loginClick(e){
+        window.location="{% url 'web.login_page' %}";
+    }
+</script>
+<div id="navbar">
+    <div id="navbar-float-left">
+        <div id="site-home">
+            <a href="{% url 'web.main' %}" title="Volver al inicio" class="use-tooltip">
+                <img src="{{ STATIC_URL }}img/home_icon.png">
+            </a>
+        </div>
+        <div id="site-time">dd/mm/yyyy hh:mm:ss</div>
+    </div>
+</div>
+<script type="text/javascript">
+    $(document).everyTime(1000, onTick);
+    onTick();
+    function onTick(e) {
+        var now = new Date();
+        var label = $('#site-time');
+        var strTime = now.toLocaleDateString() + " - " + now.toLocaleTimeString();
+        label.html(strTime);
+    }
+    $(document).ready(function (){
+    });
+</script>

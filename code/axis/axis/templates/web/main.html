@@ -1,0 +1,42 @@
+{% extends "web/shared/base.html" %}
+{% block title %}AXIS{% endblock %}
+{% block content %}
+    {% include "web/shared/header.html" %}
+    <div class="content-centered">
+        <!-- TABSTRIP CONTENT -->
+        <div id="tabstrip-block">
+            <ul>
+                <li class="k-state-active">Noticias</li>
+                <!-- { % if user.is_authenticated and is_reader %} -->
+                <li>Encuestas</li>
+                <!-- { % endif %} -->
+            </ul>
+        </div>
+    </div>
+    <div class="float-separator"></div>
+    <div id="user-account-edit-window">
+        {% include "web/editor_templates/user/user_account_edit_window.html" %}
+    </div>
+    <div id="user-pass-change-window">
+        {% include "web/editor_templates/user/user_pass_change_window.html" %}
+    </div>
+    <script type="text/javascript">
+        $("#tabstrip-block").kendoTabStrip({
+            animation: { open: { effects: "fadeIn"} },
+            contentUrls: [
+                "{% url 'web.news_tab' %}",
+                "{% url 'web.polls_tab' %}"
+            ]
+        });
+        var userAccountEditWindow = $("#user-account-edit-window").kendoWindow({
+            title: "Edicion de cuenta de usuario",
+            modal:true,
+            visible: false
+        });
+        var userPassChangeWindow = $("#user-pass-change-window").kendoWindow({
+            title: "Cambio de contraseña",
+            modal:true,
+            visible: false
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,128 @@
+<div class="publish-tab-section-title">Artículos</div>
+<div id="article-grid"></div>
+<div class="float-separator"></div>
+<script type="text/x-kendo-template" id="article-grid-toolbar">
+    <div class="toolbar">
+        <a class="k-button k-button-no-text" title="Agregar un nuevo registro" onclick="addArticleClick(this)">
+            <span class="k-icon k-add"></span>
+        </a>
+    </div>
+</script>
+<script>
+    var is_administrator = false;
+    var is_publisher = false;
+    {% if is_administrator %} is_administrator = true; {% endif %}
+    {% if is_publisher %} is_publisher = true; {% endif %}
+    function addArticleClick(button){
+        window.location = "{% url 'web.articles.create_article' %}";
+    }
+    function configAuthorEditor(authorIsNew) {
+        var windowTitle = $(".k-window-title");
+        var window = $(".k-window");
+        window.find(".k-window-actions").remove();
+        if (authorIsNew) windowTitle.text("Nuevo Autor");
+        else windowTitle.text("Editar Autor");
+        var updateButton = window.find(".k-button.k-button-icontext.k-grid-update");
+        updateButton.removeClass("k-button-icontext");
+        updateButton.html('<span class="k-icon k-update"></span>');
+        var cancelButton = window.find(".k-button.k-button-icontext.k-grid-cancel");
+        cancelButton.removeClass("k-button-icontext");
+        cancelButton.html('<span class="k-icon k-cancel"></span>');
+        $("#body_text").kendoEditor();
+    }
+    function onArticlesGridEdit(e) {
+        configAuthorEditor(e.model.isNew());
+    }
+    $(document).ready(function () {
+        var articleGridSource = new kendo.data.DataSource({
+            transport: {
+                read: { url: "{% url 'web.articles.load' %}", dataType: "json" },
+                destroy:{ url: "{% url 'web.articles.delete' %}", dataType:"json" }
+            },
+            pageSize: 8,
+            schema: {
+                model: {
+                    id: "article_id",
+                    fields: {
+                        article_id: { type: "number", validation: {required: false}, editable: false},
+                        author_id: { type: "number", validation: {required: false}, editable: false},
+                        title: { type: "string", editable: false },
+                        content_summary: { type: "string", editable: false },
+                        body_text:  { type: "string", validation: {required: false}, editable: false },
+                        deleted: { type: "boolean" },
+                        visits: { type: "number" },
+                        date: { type: "date" },
+                        sections_display: { type: "string", editable: false }
+                    }
+                }
+            }
+        });
+        function articleGridDestroy(e){
+            var articleGrid = $(e.delegateTarget).data("kendoGrid");
+            var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+            var confirmWin = confirm("¿Esta seguro de eliminar el registro?");
+            if (confirmWin === true) {
+                $.ajax({
+                    type: "POST",
+                    url: '{% url "web.articles.delete" %}',
+                    data: { article_id: dataItem.article_id },
+                    success: function(deleted) {
+                        if (deleted) articleGrid.dataSource.read();
+                    }
+                });
+            }
+        }
+        function articleGridEdit(e){
+            var dataItem = this.dataItem($(e.currentTarget).closest("tr"));
+            window.location = '{% url "web.articles.edit_article" %}?article_id=' + dataItem.article_id;
+        }
+        function onDataBound_ArticlesGrid(e){
+            var grid = $(this.element).data("kendoGrid");
+            $(this.element).find("tbody tr").each(function(){
+                var rowElement = this;
+                var row = $(rowElement);
+                var rowCells = $($(row)[0].cells);
+                var lastCell = $(rowCells[rowCells.length - 1]);
+                var dataItem = grid.dataItem(rowElement);
+                if (dataItem.publish_user_id != parseInt({{ user.id }}) && is_publisher && !is_administrator) {
+                    lastCell.find(".k-button").each(function(){
+                        $(this).disableGridBtn();
+                    });
+                }
+            });
+        }
+        var titleCellTemplate = '<a href="{% url 'web.articles.read' %}?article_id=#: article_id #"' +
+                ' title="Visitar artículo" class="article-link">#: title # <\/a>';
+        $("#article-grid").kendoGrid({
+            dataSource: articleGridSource,
+            toolbar: kendo.template($("#article-grid-toolbar").html()),
+            columns: [
+                { title: "Fecha", width: 90, field: "date", format: "{0:dd-MM-yyyy}" },
+                { title: "Título", field: "title", groupable: false, template: titleCellTemplate  },
+                { title: "Sección", width: 200, field: "sections_display" },
+                { command:[
+                    {name: "edit_content", text: { edit: "", update: "", cancel: ""},click: articleGridEdit,
+                        imageClass:"k-icon k-edit", template:$("#toolbar-icon-only-edit").html()},
+                    {name: "destroy_content", text: "", click: articleGridDestroy,  imageClass:"k-icon k-delete",
+                        template:$("#toolbar-icon-only-delete").html()}
+                ],
+                    title:"&nbsp;", width:"91px"
+                }
+            ],
+            filterable: {
+                extra: false,
+                operators: { string: $.kendoHelper.gridFilterableStrOperators },
+                messages: $.kendoHelper.gridFilterableMessages
+            },
+            groupable: { messages: $.kendoHelper.gridGroupableMessages },
+            selectable: true,
+            sortable: true,
+            pageable: {
+                pageSize: 8, refresh: true,
+                messages: $.kendoHelper.gridPageableMessages
+            },
+            dataBound: onDataBound_ArticlesGrid
+        });
+    });
+</script>
+<div class="float-separator"></div>

@@ -1,0 +1,203 @@
+<div class="bordered-bottom article-date-display">
+    {{ article_data.pub_date|date:"DATE_FORMAT" }}
+</div>
+<div class="article-read-title">
+    {{ article.title | safe }}
+</div>
+<div class="article-read-summary">
+    {{ article.content_summary | safe }}
+</div>
+{% if article_data.image_count > 0 %}
+<div class="article-read-main-image">
+    <div class="image-wrapper">
+        <div class="img"> <img src='{{ article_data.main_img_path }}' > </div>
+        <div class="float-separator"></div>
+        <div id="image-gallery-button" class="link"><span>Galería de imagenes...</span></div>
+    </div>
+</div>
+{% endif %}
+<div class="article-read-body">
+    {{ article.body_text | safe}}
+</div>
+<div class="article-read-tags-header"><span>Etiquetas</span></div>
+<div class="article-read-tags k-block">
+    <div class="article-read-tag-list">
+        {% for tag in article_data.tags %}
+        <div id="{{ tag.tag_id }}" class="article-read-tag">
+            {{ tag.tag_text }}
+            {% if is_administrator %}
+            <span class="tag-moderate" title="Eliminar por moderación" onclick="onClick_modTag(this);">
+                <span class="k-icon k-i-cancel"></span>
+            </span>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+<div class="article-read-sources-header"><span>Fuentes</span></div>
+<div class="article-read-sources k-block">
+    <div class="article-read-source-list">
+        {% for source in article_data.sources %}
+        <a id="{{ source.source_id }}" href="{{ source.url }}" target="_blank">{{ source.url }}</a><br>
+        {% endfor %}
+    </div>
+</div>
+<div class="article-read-comments">
+    <span>Comentarios</span>
+    {% if is_reader %}
+    <div class="article-read-publish-comment">
+        <textarea id="new-comment-textarea" rows=3 class="k-textbox" maxlength="400"></textarea>
+        <div id="comment-char-count">
+            <span>Caracteres: </span>
+            <span class="count nro">0</span><span class="max-char-length nro"> / {{ COMMENT_LENGTH }}</span>
+        </div>
+        <a id="article-read-comments-publish-btn" class="k-button k-grid-update" onclick="onClick_addComment(this)">
+            <span class="k-icon k-i-pencil"></span>Publicar
+        </a>
+    </div>
+    {% endif %}
+    <div id="article-read-published-comments" >
+        {% with article as article %}
+            {% include "web/reading/article_read_comments.html" %}
+        {% endwith %}
+    </div>
+</div>
+<div id="article-image-gallery-content">
+    <div id='coin-slider'>
+        {% for img in article_data.article_images %}
+            <img src='{{ img.path }}' >
+        {% endfor %}
+    </div>
+</div>
+{% include "web/utils/tag_mod_confirm_win.html" %}
+<script type="text/javascript">
+    {% if is_administrator %}
+    var tagModConfirm = $("#tag-mod-confirm");
+    var tagModWin = tagModConfirm.kendoWindow({
+        actions: {},
+        resizable: false,
+        title: "Moderar etiqueta",
+        modal:true,
+        visible: false
+    }).data("kendoWindow");
+    function tagModOk(event){
+        tagModConfirm.find(".content").hide();
+        tagModConfirm.find(".working-content").show();
+        var tagId = parseInt(tagModConfirm.find(".tag-id").html());
+        $.ajax({
+            url: '{% url "web.tags.moderate" %}',
+            type: 'POST',
+            data: { tag_id: tagId },
+            success: function (result){
+                if (result){
+                    var tagListNode = $($("#article-read-content").find((".article-read-tag-list")));
+                    var tagNode = $(tagListNode.find("#" + tagId));
+                    tagNode.fadeToggle("slow", function (){
+                        tagNode.remove();
+                        tagModWin.close();
+                    });
+
+                }
+            }
+        });
+    }
+    function tagModCancel(event){
+        tagModWin.close();
+    }
+    function onClick_modTag(e){
+        tagModConfirm.find("#tag-mod-win-ok-btn").click(tagModOk);
+        tagModConfirm.find("#tag-mod-win-cancel-btn").click(tagModCancel);
+        var tagId = parseInt($(e).attr("id"));
+        tagModConfirm.find(".tag-id").html(tagId);
+        tagModConfirm.find(".content").show();
+        tagModConfirm.find(".working-content").hide();
+        tagModWin.center().open();
+        return false;
+    }
+    {% endif %}
+    function onClick_addComment(e){
+        var textarea = $("#new-comment-textarea");
+        if (textarea.val().length > 0){
+            var articleId = parseInt({{ article.article_id }});
+            $.ajax({
+                url: '{% url "web.articles.add_comment" %}',
+                type: 'POST',
+                data: { comment: textarea.val(), article_id: articleId },
+                success: function(comment){
+                    if (comment){
+                        textarea.val("");
+                        var commentsBlock = $("#article-read-published-comments");
+                        var commentCount = commentsBlock.find(".article-comment").length;
+                        var newCommentBlock = $("#comment-block-template").find(".article-comment").clone();
+                        newCommentBlock.attr("id", "comment_" + comment.comment_id).attr("style", "display:none;");
+                        newCommentBlock.find(".comment-id").html(comment.comment_id);
+                        commentCount += 1;
+                        if (commentCount % 2 == 0){
+                            newCommentBlock.addClass("comment-block-uneven");
+                        }
+                        else {
+                            newCommentBlock.addClass("comment-block-even");
+                        }
+                        var img = newCommentBlock.find(".article-comment-user-img img");
+                        if (comment.user_profile_img_path!=""){
+                            $(img).attr("src", comment.user_profile_img_path);
+                        }
+                        newCommentBlock.find(".article-comment-user-name").html(comment.user_profile_display);
+                        var modMessage = "<div class='comment-moderated'>Comentario oculto por moderación.<\/div>";
+                        if(comment.moderated){
+                            newCommentBlock.find(".article-comment-text").html(modMessage);
+                        }
+                        else {
+                            newCommentBlock.find(".article-comment-text").html(comment.content);
+                        }
+                        if (comment.user_id != {{ user.id }}) {
+                            newCommentBlock.find(".comment-delete-btn").remove();
+                        }
+                        if ((userIsAdmin !== undefined && !userIsAdmin) || (comment.user_id == {{ user.id }})) {
+                            newCommentBlock.find(".comment-moderate-btn").remove();
+                        }
+                        if (commentCount > 0){
+                            commentsBlock.prepend(newCommentBlock);
+                        }
+                        else{
+                            commentsBlock.empty();
+                            commentsBlock.append(newCommentBlock);
+                        }
+                        if (addCommentHandlers !== undefined) {
+                            addCommentHandlers();
+                        }
+                        newCommentBlock.slideToggle();
+                    }
+                }
+            });
+        }
+    }
+    var imageGalleryWindow = $("#article-image-gallery-content").kendoWindow({
+        title: "Galería de imágenes",
+        modal:true,
+        visible:false,
+        resizable:false
+    }).data("kendoWindow");
+    imageGalleryWindow.center();
+
+    function onClick_imageGallery(e){
+        $('.cs-coin-slider').css('background-size', '700px 350px');
+        imageGalleryWindow.center().open();
+    }
+
+    $(".article-read-main-image").click(onClick_imageGallery);
+    $("#image-gallery-button").click(onClick_imageGallery);
+    var allowNavigation = false;
+    {% if article_data.article_images|length > 1 %}
+        allowNavigation = true;
+    {% endif %}
+    $('#coin-slider').coinslider({
+        links : false,
+        navigation:allowNavigation,
+        delay: 3000000,
+        width:700
+    });
+    $(document).ready(function(){
+        document.title = "{{ article.title | safe }}";
+    })
+</script>

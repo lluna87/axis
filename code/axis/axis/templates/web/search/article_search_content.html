@@ -1,0 +1,267 @@
+<div class="article-search-content">
+    <div id="article-search-title">
+        Busqueda de artículos...
+    </div>
+    <div id="article-search-input">
+        <span class="k-textbox">
+            <input id="article-search-article-title" name="title" type="text" placeholder="Buscar título..."
+                {% if search_prefilter == NAVBAR_PREFILTER_TITLE %}
+                    value="{{ search_term }}"
+                {% endif %}
+            />
+        </span>
+        <a id="article-search-button" title="Buscar..." class="k-button k-button-no-text">
+            <span class="k-icon k-i-search"></span>
+        </a>
+        <span id="article-search-loading-img" style="display: inline-block; margin-left: 10px; vertical-align: middle;"></span>
+    </div>
+    <div id="article-search-tags">
+        <div class="article-search-filter-tags-label">
+            <input id="article-search-tags-check" type="checkbox" name="tags-check">
+            <label for="article-search-tags-check">Etiquetas</label>
+        </div>
+        <div class="article-edit-input article-edit-input-half-size">
+            <select id="article-search-tags-select" multiple="multiple" name="tags"
+                    data-placeholder="Agregar etiquetas..."></select>
+            <div class="float-separator"></div>
+        </div>
+    </div>
+    <div id="article-search-sections">
+        <div class="article-search-filter-sections-label">
+            <input id="article-search-sections-check" type="checkbox" name="sections-check">
+            <label for="article-search-sections-check">Secciones</label>
+        </div>
+        <div class="article-edit-input article-edit-input-half-size">
+            <select id="article-search-sections-select" multiple="multiple" name="sections"
+                    data-placeholder="Agregar secciones..."></select>
+            <div class="float-separator"></div>
+        </div>
+    </div>
+    <div id="article-search-filters" class="k-block">
+        {% include "web/search/article_search_filters.html" %}
+    </div>
+    <div id="article-search-results" class="k-block k-shadow" style="display: none;"></div>
+    <div class="float-separator"></div>
+</div>
+<script type="text/javascript">
+    $(document).ready(function(){
+        var searchTerm = "{{ search_term }}";
+        var searchPrefilter = {{ search_prefilter }};
+        var articleSearchButton = $("#article-search-button");
+        var articleSearchAuthorCheck = $("#article-search-author-check");
+        var articleSearchPublisherCheck = $("#article-search-publisher-check");
+        var publisherPrefiltered = false;
+        var authorPrefiltered = false;
+
+        function onDataBound_AuthorCombo(e){
+            if (!authorPrefiltered && searchPrefilter == {{ NAVBAR_PREFILTER_AUTHOR }}){
+                authorPrefiltered = true;
+                var authorCombo = e.sender;
+                var data = authorCombo.dataSource.data();
+                $(data).each(function(){
+                    var author = this;
+                    if ($.str.containsStr(author.author_display, searchTerm)){
+                        articleSearchAuthorCheck.attr("checked", true);
+                        authorCombo.enable();
+                        authorCombo.value(author.author_id);
+                        authorCombo.trigger("change");
+                    }
+                });
+                articleSearchButton.trigger("click");
+            }
+        }
+        // AUTHOR FILTER
+        authorCombo = $("#article-search-author").kendoComboBox({
+            dataTextField: "author_display",
+            dataValueField: "author_id",
+            dataSource: {
+                type: "json",
+                transport: { read: { url: "{% url 'web.authors.load_combo' %}", dataType: "json" } }
+            },
+            filter: "contains",
+            dataBound: onDataBound_AuthorCombo,
+            enable:false
+        }).data("kendoComboBox");
+        articleSearchAuthorCheck.on("change", function (){
+            authorCombo.enable($(this).is(":checked"));
+        });
+
+        function onDataBound_PublisherCombo(e){
+            if (!publisherPrefiltered && searchPrefilter == {{ NAVBAR_PREFILTER_PUBLISHER }}){
+                publisherPrefiltered = true;
+                var publisherCombo = e.sender;
+                var data = publisherCombo.dataSource.data();
+                $(data).each(function(){
+                    var publisher = this;
+                    if ($.str.containsStr(publisher.user_profile_display, searchTerm)){
+                        articleSearchPublisherCheck.attr("checked", true);
+                        publisherCombo.enable();
+                        publisherCombo.value(publisher.user_profile_id);
+                        publisherCombo.trigger("change");
+                    }
+                });
+                articleSearchButton.trigger("click");
+            }
+        }
+        // PUBLISHER FILTER
+        publisherCombo = $("#article-search-publisher").kendoComboBox({
+            dataTextField: "user_profile_display",
+            dataValueField: "user_profile_id",
+            enable:false,
+            dataSource: {
+                type: "json",
+                transport: {
+                    read: { url: "{% url 'web.users.load_publishers_combo' %}", dataType: "json" }
+                }
+            },
+            filter: "contains",
+            dataBound: onDataBound_PublisherCombo
+        }).data("kendoComboBox");
+        articleSearchPublisherCheck.on("change", function (){
+            publisherCombo.enable($(this).is(":checked"));
+        });
+
+        // DATE FROM FILTER
+        function dateFromPickerChange() {
+            var startDate = dateFromPicker.value(),
+            endDate = dateToPicker.value();
+
+            if (startDate) {
+                startDate = new Date(startDate);
+                startDate.setDate(startDate.getDate());
+                dateToPicker.min(startDate);
+            } else if (endDate) {
+                dateFromPicker.max(new Date(endDate));
+            } else {
+                endDate = new Date();
+                dateFromPicker.max(endDate);
+                dateToPicker.min(endDate);
+            }
+        }
+        dateFromPicker = $("#article-search-date-from").kendoDatePicker({
+            max: new Date(),
+            change: dateFromPickerChange
+        }).data("kendoDatePicker");
+        dateFromPicker.enable(false);
+        $("#article-search-date-from-check").on("change", function (){
+            dateFromPicker.enable($(this).is(":checked"));
+        });
+
+        function dateToPickerChange() {
+            var endDate = dateToPicker.value(),
+            startDate = dateFromPicker.value();
+
+            if (endDate) {
+                endDate = new Date(endDate);
+                endDate.setDate(endDate.getDate());
+                dateFromPicker.max(endDate);
+            } else if (startDate) {
+                dateToPicker.min(new Date(startDate));
+            } else {
+                endDate = new Date();
+                dateFromPicker.max(endDate);
+                dateToPicker.min(endDate);
+            }
+        }
+        // DATE TO FILTER
+        dateToPicker = $("#article-search-date-to").kendoDatePicker({
+            max: new Date(),
+            change: dateToPickerChange
+        }).data("kendoDatePicker");
+        dateToPicker.enable(false);
+        $("#article-search-date-to-check").on("change", function (){
+            dateToPicker.enable($(this).is(":checked"));
+        });
+
+        // TAGS FILTER
+        tagsMultiselect = $("#article-search-tags-select").kendoMultiSelect({
+            dataTextField: "tag",
+            dataValueField: "tag",
+            dataSource: {
+                type: "json",
+                transport: { read: { url: "{% url 'web.tags.select_combo' %}", dataType: "json" } }
+            },
+            enable: false,
+            autoBind: false,
+            filter: "contains"
+        }).data("kendoMultiSelect");
+        $("#article-search-tags-check").on("change", function (){
+            tagsMultiselect.enable($(this).is(":checked"));
+        });
+
+        // SECTIONS FILTER
+        pollSectionsMultiselect = $("#article-search-sections-select").kendoMultiSelect({
+            dataTextField: "section",
+            dataValueField: "id",
+            enable:false,
+            autoBind: false,
+            dataSource: {
+                type: "json",
+                transport: { read: { url: "{% url 'web.sections.select_combo' %}", dataType: "json" } }
+            },
+            filter: "contains"
+        }).data("kendoMultiSelect");
+        $("#article-search-sections-check").on("change", function (){
+            pollSectionsMultiselect.enable($(this).is(":checked"));
+        });
+        function showResults(articles){
+            var articleSearchResults = $("#article-search-results");
+            $(articles).each(function() {
+                var article = this;
+                var newResultBlock = $.GuiHelper.getArticleSearchBlock(article);
+                articleSearchResults.append(newResultBlock);
+            });
+            if (articles.length === 0){
+                articleSearchResults.html(
+                        "<span class='article-search-no-results'>No existen resultados disponibles.</span>");
+            }
+            var loadingImg = $("#article-search-loading-img");
+            loadingImg.empty();
+            articleSearchResults.slideDown("slow");
+        }
+        function searchKeyPress(event){
+            var enterKey = 13;
+            if (event.keyCode == enterKey) {
+                articleSearchButton.trigger("click");
+            }
+        }
+        function searchClick(){
+            var articleSearchResults = $("#article-search-results");
+            var articleSearchContent = $("#article-search-content");
+            var checkedCount = articleSearchContent.find(":checked").length;
+            if(articleSearchContent.find("#article-search-article-title").val() != "" || checkedCount > 0){
+                var items = $(".article-search-content").find(":input[name]");
+                var tempForm = $("<form>");
+                $(items).each(function(){ tempForm.append($(this).clone()); });
+                var serialInput = $(tempForm).serialize();
+                var tagSerial = "";
+                var sectionSerial = "";
+                if ($("#article-search-tags-check").is(":checked") && tagsMultiselect.value().length > 0){
+                    tagSerial = "&tags=" + JSON.stringify(tagsMultiselect.value());
+                }
+                if ($("#article-search-sections-check").is(":checked") && pollSectionsMultiselect.value().length > 0) {
+                    sectionSerial = "&sections=" + JSON.stringify(pollSectionsMultiselect.value());
+                }
+                articleSearchResults.slideUp(function(){
+                    articleSearchResults.empty();
+                    var loadingImg = $("#article-search-loading-img");
+                    loadingImg.setLoadingMask(true);
+                    $.ajax({
+                        url: "{% url 'web.articles.search_result' %}",
+                        type: "post",
+                        dataType: 'json',
+                        data: serialInput + tagSerial + sectionSerial,
+                        success: showResults
+                    });
+                });
+            }
+        }
+
+        articleSearchButton.on("click", searchClick);
+        $("#article-search-article-title").bind("keypress", searchKeyPress);
+
+        if (searchPrefilter == {{ NAVBAR_PREFILTER_TITLE }} && !$.str.isNullOrEmptyStr(searchTerm)){
+            articleSearchButton.trigger("click");
+        }
+    });
+</script>

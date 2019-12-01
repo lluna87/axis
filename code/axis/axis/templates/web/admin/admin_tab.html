@@ -1,0 +1,44 @@
+<div id="admin-tab-content">
+    <div id="admin-side-menu" class="side-menu">
+        <div id="users-menu-button" class="side-button">Usuarios</div>
+        <div id="sections-menu-button" class="side-button">Secciones</div>
+    </div>
+    <div id="admin-content">
+        <div id="admin-users-content" class="admin-display" style="display: none;">
+            {% include 'web/admin/admin_users_tab.html' %}
+        </div>
+        <div id="admin-sections-content" class="admin-display">
+            {% include  "web/admin/admin_sections.html" %}
+        </div>
+    </div>
+    <div class="float-separator"></div>
+</div>
+<script>
+    function adminSideButtonClick(e){
+        var eventButton = $(e.currentTarget);
+        var buttons = $("#admin-side-menu").find(".side-button");
+        buttons.removeClass("side-button-selected");
+        eventButton.addClass("side-button-selected");
+        var buttonId = eventButton.attr("id");
+        $(".admin-display").css("display", "none");
+        switch (buttonId){
+            case "sections-menu-button":
+                $("#admin-sections-content").fadeToggle();
+                break;
+            case "users-menu-button":
+                $("#admin-users-content").fadeToggle();
+                break;
+            default:
+                alert("Error: El botón no tiene acción asociada.");
+                break;
+        }
+    }
+    function documentReadyAction(){
+        var buttons = $("#admin-side-menu").find(".side-button");
+        $(buttons).each(function(){
+            $(this).click(adminSideButtonClick);
+        });
+        $("#users-menu-button").trigger("click");
+    }
+    $(document).ready(documentReadyAction);
+</script>

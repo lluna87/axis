@@ -1,0 +1,53 @@
+{% extends "web/shared/base.html" %}
+{% block title %}AXIS{% endblock %}
+{% block content %}
+    {% include "web/shared/header.html" %}
+    <div class="content-centered">
+        <!-- TABSTRIP CONTENT -->
+        <div id="tabstrip-block">
+            <ul>
+                <li class="k-state-active">Noticias</li>
+                <li>Encuestas</li>
+                {% if is_publisher or is_administrator %}
+                <li>Publicación</li>
+                {% endif %}
+                {% if is_administrator   %}
+                <li>Administración</li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+    <div class="float-separator"></div>
+    <div id="user-account-edit-window">
+        {% include "web/editor_templates/user/user_account_edit_window.html" %}
+    </div>
+    <div id="user-pass-change-window">
+        {% include "web/editor_templates/user/user_pass_change_window.html" %}
+    </div>
+    <script type="text/javascript">
+        var tabstripUrls = [];
+        tabstripUrls.push("{% url 'web.news_tab' %}");
+        tabstripUrls.push("{% url 'web.polls_tab' %}");
+        {% if is_publisher or is_administrator %}
+        tabstripUrls.push("{% url 'web.publish_tab' %}");
+        {% endif %}
+        {% if is_administrator %}
+        tabstripUrls.push("{% url 'web.admin_tab' %}");
+        {% endif %}
+
+        var mainTabStrip = $("#tabstrip-block").kendoTabStrip({
+            animation: { open: { effects: "fadeIn"} },
+            contentUrls: tabstripUrls
+        }).data("kendoTabStrip").select(0);
+        var userAccountEditWindow = $("#user-account-edit-window").kendoWindow({
+            title: "Edicion de cuenta de usuario",
+            modal:true,
+            visible: false
+        });
+        var userPassChangeWindow = $("#user-pass-change-window").kendoWindow({
+            title: "Cambio de contraseña",
+            modal:true,
+            visible: false
+        });
+    </script>
+{% endblock %}

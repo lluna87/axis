@@ -1,0 +1,23 @@
+<div class="article-edit-line" style="margin-top:10px;">
+    <!-- class="article-edit-label" -->
+    <label for="image-files" class="article-edit-label">Imágenes</label>
+    <div><span class="k-invalid-msg" style="margin-bottom: 8px;" data-for="image-files" data-invalid-msg="URL inválida"></span></div>
+    <input id="image-files"  name="image-files" type="file" style="float: left;"  accept="image/*"  />
+    <div id="img-listview"></div>
+    <div id="article-img-pager" class="k-pager-wrap"></div>
+</div>
+<div class="float-separator"></div>
+<script type="text/x-kendo-tmpl" id="listview-template">
+    <div class="article-create-img-container">
+        <div class="article-create-img k-widget" onclick="onClick_articleImg(event, this)">
+            <div class="article-img-hover-div"></div>
+            <span class="delete-image k-button" onclick="onClick_deleteImg(event, this)">
+                <span class="k-icon k-i-close"></span>
+            </span>
+            <span class="article-img-hover-text">Marcar como principal</span>
+            <div class="article-img-selected-back"></div>
+            <span class="article-img-selected-text">Imagen principal</span>
+            <img src="${image_path}" image_id="${image_id}" is_main="${is_main}" />
+        </div>
+    </div>
+</script>

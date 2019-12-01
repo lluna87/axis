@@ -1,0 +1,43 @@
+<div class="poll-edit-line">
+    <div class="poll-edit-label">
+        <label for="title">Título</label>
+    </div>
+    <div class="poll-edit-input">
+        <input id="title" type="number" class="k-input k-textbox" name="title" required="required" data-bind="value:title">
+    </div>
+</div>
+<div class="poll-edit-line">
+    <div class="poll-edit-title">Período de validez</div>
+    <div class="poll-editor-period-block">
+        <div class="aligned-left" style="padding-right: 5px;">
+            <div class="poll-edit-label">
+                <label for="voting_period_start">Comienzo</label>
+            </div>
+            <div class="poll-edit-input">
+                <input id="voting_period_start" name="voting_period_start" required="required"
+                       data-bind="value:voting_period_start">
+            </div>
+        </div>
+        <div class="aligned-left" style="padding-left:5px;">
+            <div class="poll-edit-label"><label for="voting_period_end">Fin</label></div>
+            <div class="poll-edit-input">
+                <input id="voting_period_end" name="voting_period_end" required="required"
+                data-bind="value:voting_period_end">
+            </div>
+        </div>
+        <div class="float-separator"></div>
+    </div>
+</div>
+<div class="poll-edit-line">
+    <div class="poll-edit-label"><label for="poll-sections">Secciones</label></div>
+    <div class="profile-input-large" style="clear:left;">
+        <select id="poll-sections" multiple="multiple" data-placeholder="Agregar secciones..."></select>
+    </div>
+</div>
+<div class="poll-edit-line">
+    <div class="poll-edit-label"><label for="description">Descripción</label></div>
+    <div class="poll-edit-input" style="clear:left;">
+        <textarea id="description" class="k-input k-textbox" name="description" rows="3" cols="300"
+            data-bind="value:description"></textarea>
+    </div>
+</div>

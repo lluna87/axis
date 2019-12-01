@@ -1,0 +1,218 @@
+<div class="k-edit-form-container" style="padding: 0!important;">
+    <form id="external-author-form">
+    {% include "web/editor_templates/author/author_popup_editor.html" %}
+    <div class="float-separator"></div>
+    <div class="k-edit-buttons k-state-default" style="padding: 0;margin-top:4px;padding-top:4px; bottom: 0!important;">
+        <a class="k-button k-grid-update" onclick="onSave_Author()">
+            <span class="k-icon k-update"></span>
+        </a>
+        <a class="k-button k-grid-cancel" onclick="onCancel_Author()">
+            <span class="k-icon k-cancel"></span>
+        </a>
+    </div>
+    <div class="float-separator"></div>
+    </form>
+</div>
+<script type="text/javascript">
+    var TEMP_PROFILE_IMG_URL = {{ MEDIA_URL }} + "/temp/profile_images/";
+    var STATIC_IMG = "/axis/static/img/";
+    var PROFILE_IMG_URL = {{ MEDIA_URL }} + "/profile_images/";
+    var editor = $(".k-edit-form-container");
+    function updateAuthorFields(model){
+        var authorEditor = $("#author-editor");
+        var window = authorEditor.closest(".k-window");
+        authorEditor.find("#first_name").val(model.first_name).text(model.first_name);
+        authorEditor.find("#last_name").val(model.last_name).text(model.last_name);
+        authorEditor.find("#biography").val(model.biography).text(model.biography);
+        var imgUrl = "{{ STATIC_URL }}img/silhouette_author.png" + "#" + new Date().getTime();
+        var profileImgDom = window.find("#profile-img");
+        if(model.profile_image_path.length > 0){
+            imgUrl = PROFILE_IMG_URL + model.profile_image_path + "#" + new Date().getTime();
+        }
+        profileImgDom.attr("src", imgUrl);
+    }
+    function disableAuthorEditor(){
+        var authorEditor = $("#author-editor");
+        authorEditor.find("#first_name").attr("readonly", "readonly");
+        authorEditor.find("#last_name").attr("readonly", "readonly");
+        authorEditor.find("#biography").attr("readonly", "readonly");
+    }
+    function enableAuthorEditor(){
+        var authorEditor = $("#author-editor");
+        authorEditor.find("#first_name").removeAttr("readonly");
+        authorEditor.find("#last_name").removeAttr("readonly");
+        authorEditor.find("#biography").removeAttr("readonly");
+    }
+    function clearAuthorEditor(){
+        var authorEditor = $("#author-editor");
+        var window = authorEditor.closest(".k-window");
+        authorEditor.find("#first_name").val("");
+        authorEditor.find("#last_name").val("");
+        authorEditor.find("#biography").val("");
+        var imgUrl = "{{ STATIC_URL }}img/silhouette_author.png" + "#" + new Date().getTime();
+        var profileImgDom = window.find("#profile-img");
+        profileImgDom.attr("src", imgUrl);
+    }
+    function existingUserClick(e) {
+        var window = $("#author-editor").closest(".k-window");
+        var checkbox = $(e.currentTarget);
+        var editor = checkbox.parent();
+        var useExistingUserCombo = window.find("#use-existing-user-combo");
+        var profileImgContainer = window.find("#profile-img-container");
+        var profileImgPathInput = window.find("#profile-img-path");
+        var profileImgDom = window.find("#profile-img");
+        if (checkbox.is(':checked')) {
+            var usersInput = useExistingUserCombo.find("#users").data("kendoComboBox");
+            usersInput.refresh();
+            useExistingUserCombo.slideDown();
+            profileImgContainer.find("#profile-image-clean").slideUp();
+            profileImgContainer.find("#profile-img-upload-content").slideUp();
+            var profileImgPath = "{{ STATIC_URL }}img/silhouette_author.png";
+            profileImgDom.attr("src", profileImgPath + "#" + new Date().getTime());
+            clearAuthorEditor();
+            disableAuthorEditor();
+        }
+        else {
+            profileImgContainer.find("#profile-image-clean").slideDown();
+            profileImgContainer.find("#profile-img-upload-content").slideDown();
+            useExistingUserCombo.slideUp();
+
+            /* IMAGE SET */
+            var previousPath = profileImgPathInput.val();
+            var imgUrl = "{{ STATIC_URL }}img/silhouette_author.png" + "#" + new Date().getTime();
+            var imgInputVal = "clean";
+            if (previousPath.length !== 0 && previousPath !== "clean") {
+                if (previousPath.indexOf("temp") > 0) {
+                    imgUrl = TEMP_PROFILE_IMG_URL + previousPath + "#" + new Date().getTime();
+                }
+                else{
+                    imgUrl = PROFILE_IMG_URL + previousPath + "#" + new Date().getTime();
+                }
+                imgInputVal = previousPath;
+            }
+            profileImgPathInput.val(imgInputVal);
+            profileImgDom.attr("src", imgUrl);
+            /* IMAGE SET */
+            enableAuthorEditor();
+            clearAuthorEditor();
+        }
+    }
+    function onSelect_authorProfileImgUpload(e) {
+        var files = e.files;
+        $.each(files, function () {
+            var ext = this.extension.toLowerCase();
+            if (ext != ".jpeg" && ext != ".jpg" && ext != ".png" && ext != ".bmp" && ext != ".gif") {
+                alert("Seleccione un archivo de imágen (*.jpeg, *.jpg, *.png, *.bmp, *.gif)");
+                e.preventDefault();
+            }
+        });
+    }
+    function onSuccess_authorProfileImgUpload(e){
+        var window = $("#author-editor").closest(".k-window");
+        var profileImg = window.find("#profile-img");
+        var fileRoute = TEMP_PROFILE_IMG_URL + e.response;
+        profileImg.attr("src", "").attr("src", fileRoute + "#" + new Date().getTime());
+        var obj = window.find("#profile-img-path");
+        obj.text(e.response);
+        obj.val(e.response);
+    }
+    function configAuthorEditor(authorIsNew) {
+        var window = $("#author-editor").closest(".k-window");
+        var windowTitle = window.find(".k-window-title");
+        if (authorIsNew) windowTitle.text("Nuevo Autor");
+        else windowTitle.text("Editar Autor");
+        window.find("#profile-img-select").kendoUpload({
+            localization: $.kendoHelper.uploadLocalization,
+            async: {
+                saveUrl: "{% url 'web.authors.upload_profile_image' %}",
+                autoUpload: true
+            },
+            success: onSuccess_authorProfileImgUpload,
+            multiple: false,
+            showFileList: false,
+            select: onSelect_authorProfileImgUpload
+        });
+        var updateBtn = window.find(".k-button.k-button-icontext.k-grid-update");
+        updateBtn.removeClass("k-button-icontext");
+        updateBtn.html('<span class="k-icon k-update"></span>');
+        var cancelBtn = window.find(".k-button.k-button-icontext.k-grid-cancel");
+        cancelBtn.removeClass("k-button-icontext");
+        cancelBtn.html('<span class="k-icon k-cancel"></span>');
+    }
+    function onChange_UsersComboBox (e){
+        var dataItem = e.sender.dataItem();
+        if (dataItem !== undefined) {
+            var user_profile_id = dataItem.user_profile_id;
+            $.ajax({
+                url: "{% url 'web.users.load_user' %}",
+                type: "post",
+                dataType: "json",
+                data: { user_profile_id: user_profile_id },
+                success: function (e){
+                    updateAuthorFields(e);
+                }
+            });
+        }
+        else {
+            clearAuthorEditor();
+        }
+    }
+    function cleanAuthorProfileImg(e){
+        var window = $("#author-editor").closest(".k-window");
+        var emptySilhouete = STATIC_IMG + "silhouette_author.png";
+        window.find("#profile-img").attr("src", "").attr("src", emptySilhouete + "#" + new Date().getTime());
+        window.find("#profile-img-path").val("clean");
+        $.ajax({
+            url: "{% url 'web.authores.clean_tmp_profile_img' %}",
+            type: "post",
+            success: function(){
+                window.find(".k-upload-status").html('Imágen eliminada<span class="k-icon k-i-tick">Imágen eliminada</span>');
+            }
+        });
+    }
+    configAuthorEditor(true);
+    var usersInput = $("#use-existing-user-combo").find("#users");
+    $(usersInput).kendoComboBox({
+        dataTextField: "user_profile_display",
+        dataValueField: "user_profile_id",
+        dataSource: {
+            type: "json",
+            transport: {
+                read: { url: "{% url 'web.users.load_users_combo_for_author' %}", dataType: "json" }
+            }
+        },
+        filter: "contains",
+        change: onChange_UsersComboBox
+    });
+    $("#profile-image-clean").show().click(cleanAuthorProfileImg);
+    $("#use-existing-user-check").click(existingUserClick);
+    //$("#use-existing-user-check").attr("checked", "checked");
+    //$("#use-existing-user-check").trigger("click");
+        // DESDE LA PAGINA LLAMADORA SE DEBE DECLARAR LA VENTANA CON EL NOMBRE SIGUIENTE
+        activeAuthorWindow.center().open();
+    var authorValidator = $("#external-author-form").kendoValidator({
+            messages: {
+                required: "Dato requerido",
+                requestedFormat: "Respete el formato correspondiente"
+            }
+        }).data("kendoValidator");
+
+    function onSave_Author(){
+        enableAuthorEditor();
+        if (authorValidator.validate()) {
+            disableAuthorEditor();
+            $.ajax({
+                url: "{% url 'web.authors.insert_author' %}",
+                type: "get",
+                data: $(activeAuthorWindow.element).find("form").serialize(),
+                success: function (){ activeAuthorWindow.close(); }
+            });
+        }
+        disableAuthorEditor();
+        // ABORT SUBMIT
+        return false;
+    }
+    function onCancel_Author(){
+        activeAuthorWindow.close();
+    }
+</script>

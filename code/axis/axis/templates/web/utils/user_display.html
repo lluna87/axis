@@ -1,0 +1,60 @@
+<div id="user-popup-editor" class="editor-container">
+    <div id="profile-img-container">
+        <div class="profile-img-title">Imagen de perfil</div>
+        <div id="profile-img-file-content" class="profile-img-content">
+            <img id="profile-img" class="profile-img" src="{{ STATIC_URL }}img/silhouette_user.png"/><br>
+        </div>
+    </div>
+    <div class="editor-inner-content">
+        <div class="profile-data-content">
+            <div class="profile-edit-line">
+                <div class="profile-edit-label">
+                    <label for="first_name">Nombre</label>
+                </div>
+                <div class="profile-input-large">
+                    <input id="first_name" type="text" class="k-input k-textbox" readonly="readonly">
+                </div>
+            </div>
+            <div class="profile-edit-line">
+                <div class="profile-edit-label">
+                    <label for="last_name">Apellido</label>
+                </div>
+                <div class="profile-input-large">
+                    <input id="last_name" type="text" class="k-input k-textbox" readonly="readonly"/>
+                </div>
+            </div>
+            <div class="user-edit-line">
+                <div class="profile-img-title">Permisos</div>
+                <div class="user-edit-input aligned-left">
+                    <input id="is_reader" type="checkbox" disabled="disabled">
+                </div>
+                <div class="user-edit-label aligned-left editor-check-label">
+                    <label for="is_reader">Lector</label>
+                </div>
+                <div class="user-edit-input aligned-left">
+                    <input id="is_publisher" type="checkbox" disabled="disabled">
+                </div>
+                <div class="user-edit-label aligned-left editor-check-label">
+                    <label for="is_publisher">Publicador</label>
+                </div>
+                <div class="user-edit-input aligned-left">
+                    <input id="is_administrator" type="checkbox" disabled="disabled">
+                </div>
+                <div class="user-edit-label aligned-left editor-check-label">
+                    <label for="is_administrator">Administrador</label>
+                </div>
+                <div class="float-separator"></div>
+            </div>
+            <div class="user-edit-line">
+                <div class="user-edit-label">
+                    <label for="biography">Biografía</label>
+                </div>
+                <div class="user-edit-input" style="clear:left;">
+                    <textarea id="biography" class="k-input k-textbox" rows="6" cols="160"
+                            maxlength="{{ BIOGRAPHY_LENGTH }}"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="float-separator"></div>

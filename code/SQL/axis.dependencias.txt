@@ -1,0 +1,9 @@
+postgresql-9.1.5-1-windows
+
+Python 2.7.3
+setuptools 1.4
+pip 1.4.1
+Django 1.6
+south 0.8.3
+psycopg2-2.5.1.win-amd64-py2.7.exe ==== http://www.lfd.uci.edu/~gohlke/pythonlibs/#psycopg 
+psycopg2-2.5.1.win32-py2.7.exe ==== http://www.lfd.uci.edu/~gohlke/pythonlibs/#psycopg

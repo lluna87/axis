@@ -1,0 +1,102 @@
+<form id="account-config-form" action="{% url 'web.users.account_config_update' %}" method="post">
+    {% csrf_token %}
+    <input id="auth_user_id" type="number" value="{{ user_data.auth_user_id }}" name="auth_user_id" style="display: none;" />
+    <input id="user_profile_id" type="number" value="{{ user_data.user_profile_id }}" name="user_profile_id" style="display: none;" />
+    <div id="user-popup-editor">
+        <div id="profile-img-container">
+            <div class="profile-img-title">Imagen de perfil</div>
+            <div id="profile-img-file-content" class="profile-img-content">
+                <img id="profile-img" class="profile-img"
+                {% if user_data.profile_image_path.strip %}
+                     src="{{ MEDIA_URL }}profile_images/{{ user_data.profile_image_path }}"
+                {% else %}
+                     src="{{ STATIC_URL }}img/silhouette_user.png"
+                {% endif %}
+                /><br>
+                <button id="profile-image-clean" type="button" class="k-button">Limpiar...</button>
+            </div>
+            <div id="profile-img-upload-content" class="profile-img-content">
+                <input id="profile-img-select" name="profile_image" type="file"/>
+                <input id="profile-img-path" autocomplete="off" name="profile_image_path" data-bind="value:profile_image_path" style="display: none;"/>
+                <input name="profile-image" type="text" style="display: none;" data-bind="value:profile_image">
+            </div>
+        </div>
+        <div class="editor-inner-content">
+            <div class="profile-data-content">
+                <div class="profile-edit-line">
+                    <div class="profile-edit-label">
+                        <label for="first_name">Nombre</label>
+                    </div>
+                    <div class="profile-input-large">
+                        <input id="first_name" type="text" value="{{ user_data.first_name }}" class="k-input k-textbox"
+                               style="margin-bottom: 4px;" name="first_name"
+                               required validationMessage="Por favor ingrese su nombre" pattern="[a-zA-Záíéóú ]+"
+                               autocomplete="off"
+                               oninvalid="setCustomValidity('Este campo solo puede contener letras (a..z, A..Z)')"
+                               onchange="try{setCustomValidity('')}catch(e){}" maxlength="30">
+                        <div class="float-separator"></div>
+                        <span class="k-invalid-msg" data-for="first_name"></span>
+                    </div>
+                </div>
+                <div class="profile-edit-line">
+                    <div class="profile-edit-label"><label for="last_name">Apellido</label></div>
+                    <div class="profile-input-large">
+                        <input id="last_name" type="text" value="{{ user_data.last_name }}" class="k-input k-textbox"
+                               name="last_name" style="margin-bottom: 4px;"
+                               required validationMessage="Por favor ingrese su apellido"
+                               pattern="[a-zA-Záíéóú ]+" autocomplete="off"
+                               oninvalid="setCustomValidity('Este campo solo puede contener letras (a..z, A..Z)')"
+                               onchange="try{setCustomValidity('')}catch(e){}" maxlength="30">
+                        <div class="float-separator"></div>
+                        <span class="k-invalid-msg" data-for="last_name"></span>
+                    </div>
+                </div>
+                <div class="profile-edit-line">
+                    <div class="profile-edit-label"><label for="user_name">Usuario</label></div>
+                    <div class="profile-input-large">
+                        <input id="user_name" value="{{ user_data.username }}" class="k-input k-textbox" name="user_name" type="text"
+                             style="margin-bottom: 4px;" required validationMessage="Usuario no disponible o no válido (a..z, A..Z, 0..9)"
+                            autocomplete="false" autocomplete="off" pattern="[a-zA-Z0-9]+"
+                            oninvalid="setCustomValidity('Este campo puede contener letras y números (a..z, A..Z, 0..9)')"
+                            onchange="try{setCustomValidity('')}catch(e){}" maxlength="30">
+                        <div class="float-separator"></div>
+                        <span class="k-invalid-msg" data-for="user_name"></span>
+                    </div>
+                </div>
+                <div class="profile-edit-line">
+                    <div class="profile-edit-label"><label for="email">E-Mail</label></div>
+                    <div class="profile-input-large">
+                        <input id="email" value="{{ user_data.email }}" class="k-input k-textbox" name="email" type="email"
+                               placeholder="ej: minombre@ejemplo.com"  style="margin-bottom: 4px;" required
+                               data-email-msg="El formato de correo no es vàlido" autocomplete="false"
+                               autocomplete="off" maxlength="75"/>
+                        <div class="float-separator"></div>
+                        <span class="k-invalid-msg" data-for="email"></span>
+                    </div>
+                </div>
+                <div class="float-separator"></div>
+                <div class="profile-edit-line">
+                    <div class="profile-edit-label"><label for="user-favorite-sections">Secciones favoritas</label></div>
+                    <div class="profile-input-large" style="clear:left;">
+                        <select id="user-favorite-sections" multiple="multiple" data-placeholder="Agregar secciones..."></select>
+                        <input id="user-favorite-sections-data" type="text" name="user_favorite_sections" style="display: none" />
+                    </div>
+                </div>
+                <div class="reader-edit-line-textarea">
+                    <div class="reader-edit-label-top"><label for="biography">Biografía</label></div>
+                    <div class="reader-edit-input" style="clear:left;">
+                        <textarea id="biography"  value="{{ user_data.biography }}" class="k-input k-textbox"
+                                  name="biography" rows="6" cols="160"
+                                  data-bind="value:biography" maxlength="{{ BIOGRAPHY_LENGTH }}"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="float-separator"></div>
+        <div class="user-account-edit-buttons">
+            <button id="account-config-ok-btn" class="k-button k-grid-edit k-button-no-text" title="Guardar datos">
+                <span class="k-icon k-update"></span>Guardar
+            </button>
+        </div>
+    </div>
+</form>

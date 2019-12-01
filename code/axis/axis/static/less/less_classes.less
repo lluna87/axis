@@ -1,0 +1,103 @@
+.margin-null(){
+  margin: 0 0 0 0;
+}
+.margin(@value:0){
+  margin-left: @value;
+  margin-right: @value;
+  margin-top: @value;
+  margin-bottom: @value;
+}
+.margin-left-right(@value:0){
+  margin-left: @value;
+  margin-right: @value;
+}
+.margin-top-bottom(@value:0){
+  margin-top: @value !important;
+  margin-bottom: @value !important;
+}
+.padding-null(){
+  margin: 0 0 0 0;
+}
+.padding(@value:0){
+  padding-left: @value !important;
+  padding-right: @value !important;
+  padding-top: @value !important;
+  padding-bottom: @value !important;
+}
+.padding-left-right(@value:0){
+  padding-left: @value;
+  padding-right: @value;
+}
+.padding-top-bottom(@value:0){
+  padding-top: @value;
+  padding-bottom: @value;
+}
+.centered-by-margin(@margin-left: 10%, @margin-right: 10%){
+  margin-left:@margin-left;
+  margin-right:@margin-right;
+}
+.border(@color: #000000, @width:1px, @style: solid, @radius: 0)
+{
+  border-radius: @radius;
+  border-style: @style;
+  border-color: @color;
+  border-width: @width;
+}
+.border-left(@width:1px, @color: #000000, @style: solid)
+{
+  border-left-style: @style;
+  border-left-color: @color;
+  border-left-width: @width;
+}
+.border-right(@width:1px, @color:red, @style: solid)
+{
+  border-right-style: @style;
+  border-right-color: @color;
+  border-right-width: @width;
+}
+.background-image-repeat-both(@imageURL, @size, @color, @repeat)
+{
+  background-image: @imageURL;
+  background-size: @size;
+  background-color: @color;
+  background-repeat: @repeat;
+}
+.full-height()
+{
+  height: auto !important; /* ie6 ignores !important, so this will be overridden below */
+  min-height: 100% !important; /* ie6 ignores min-height completely */
+  height: 100% !important;
+}
+.underlined-by-border(@color: #6591C6)
+{
+  border-bottom-style: solid;
+  border-bottom-color: @color;
+  border-bottom-width: 1px;
+  padding-bottom: 2px;
+  margin-bottom: 3px;
+}
+.font-style(@size, @weight, @color, @style){
+  font-size: @size;
+  font-weight: @weight;
+  color: @color;
+  font-style: @style;
+}
+.exact-width(@width){
+  width:@width;
+  min-width:@width;
+  max-width:@width;
+}
+.exact-height(@height){
+  height:@height;
+  min-height:@height;
+  max-height:@height;
+}
+.search-button(){
+  cursor: pointer;height: 28px;margin-right: -3px;margin-top: -14px;width: 22px;
+  background-position: -28px -234px;
+}
+
+.border-top-radius(@radius:3px){
+  border-top-left-radius: @radius;
+  border-top-right-radius: @radius;
+}

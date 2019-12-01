@@ -1,0 +1,106 @@
+<div id="user-popup-editor" class="editor-container">
+    <input id="auth-user-id" name="auth_user_id" data-bind="value:auth_user_id" style="display: none;" readonly/>
+    <div id="profile-img-container">
+        <div class="profile-img-title">Imagen de perfil</div>
+        <div id="profile-img-file-content" class="profile-img-content">
+            <img id="profile-img" class="profile-img" src="{{ STATIC_URL }}img/silhouette_user.png"/><br>
+            <button id="profile-image-clean" type="button" class="k-button">Limpiar...</button>
+        </div>
+        <div id="profile-img-upload-content" class="profile-img-content">
+            <input id="profile-img-select" name="profile_image" type="file"/>
+            <input id="profile-img-path" autocomplete="off" name="profile_image_path" data-bind="value:profile_image_path" style="display: none;"/>
+            <input name="profile-image" type="text" style="display: none;" data-bind="value:profile_image">
+        </div>
+    </div>
+    <div class="editor-inner-content">
+        <div class="profile-data-content">
+            <div class="profile-edit-line">
+                <div class="profile-edit-label">
+                    <label for="first_name">Nombre</label>
+                </div>
+                <div class="profile-input-large">
+                    <input id="first_name" type="text" class="k-input k-textbox" name="first_name"
+                           data-bind="value:first_name" required pattern="[a-zA-Záíéóú ]+"
+                           oninvalid="setCustomValidity('Este campo solo puede contener letras (a..z, A..Z)')"
+                           onchange="try{setCustomValidity('')}catch(e){}"
+                           data-required-msg="Campo requerido"
+                           maxlength="{{ NAME_LENGTH }}">
+                </div>
+            </div>
+            <div class="profile-edit-line">
+                <div class="profile-edit-label">
+                    <label for="last_name">Apellido</label>
+                </div>
+                <div class="profile-input-large">
+                    <input id="last_name" type="text" class="k-input k-textbox" name="last_name"
+                           data-bind="value:last_name" required pattern="[a-zA-Záíéóú ]+"
+                           oninvalid="setCustomValidity('Este campo solo puede contener letras (a..z, A..Z)')"
+                           onchange="try{setCustomValidity('')}catch(e){}"
+                           data-required-msg="Campo requerido"
+                           maxlength="{{ NAME_LENGTH }}">
+                </div>
+            </div>
+            <div class="profile-edit-line">
+                <div class="profile-edit-label">
+                    <label for="email">E-Mail</label>
+                </div>
+                <div class="profile-input-large">
+                    <input id="email" type="email" class="k-input k-textbox" name="email" data-bind="value:email"
+                           placeholder="ejemplo@ejemplo.com" required validationMessage="Campo requerido"
+                            maxlength="{{ EMAIL_LENGTH }}"/>
+                </div>
+            </div>
+            <div id="password-box" class="user-edit-line">
+                <div class="user-mult-col-edit-line margin-right-10">
+                    <div class="user-edit-label"><label for="password">Contraseña</label></div>
+                    <div class="user-edit-input">
+                        <input id="password" type="password" class="k-input k-textbox" name="password" data-bind="value:password"
+                               required validationMessage="Ingresar contraseña" autocomplete="off"
+                                maxlength="{{ PASSWORD_LENGTH }}">
+                    </div>
+                </div>
+                <div class="user-mult-col-edit-line">
+                    <div class="user-edit-label"><label for="conf-password">Confirmar contraseña</label></div>
+                    <div class="user-edit-input">
+                        <input id="conf-password" type="password" class="k-input k-textbox" name="conf_password"
+                               required validationMessage="Confirmar contraseña"
+                                 autocomplete="off" maxlength="{{ PASSWORD_LENGTH }}">
+                    </div>
+                </div>
+                <div class="float-separator"></div>
+            </div>
+            <div class="user-edit-line">
+                <div class="profile-img-title">Permisos</div>
+                <div class="user-edit-input aligned-left">
+                    <input id="is_reader" type="checkbox" name="is_reader" data-bind="value:is_reader">
+                </div>
+                <div class="user-edit-label aligned-left editor-check-label">
+                    <label for="is_reader">Lector</label>
+                </div>
+                <div class="user-edit-input aligned-left">
+                    <input id="is_publisher" type="checkbox" name="is_publisher" data-bind="value:is_publisher">
+                </div>
+                <div class="user-edit-label aligned-left editor-check-label">
+                    <label for="is_publisher">Publicador</label>
+                </div>
+                <div class="user-edit-input aligned-left">
+                    <input id="is_administrator" type="checkbox" name="is_administrator" data-bind="value:is_administrator">
+                </div>
+                <div class="user-edit-label aligned-left editor-check-label">
+                    <label for="is_administrator">Administrador</label>
+                </div>
+                <div class="float-separator"></div>
+            </div>
+            <div class="user-edit-line">
+                <div class="user-edit-label">
+                    <label for="biography">Biografía</label>
+                </div>
+                <div class="user-edit-input" style="clear:left;">
+                    <textarea id="biography" class="k-input k-textbox" name="biography" rows="6" cols="160"
+                              data-bind="value:biography" maxlength="{{ BIOGRAPHY_LENGTH }}"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="float-separator"></div>

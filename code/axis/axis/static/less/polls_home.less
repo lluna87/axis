@@ -1,0 +1,50 @@
+.poll-container { margin-bottom: 10px; .padding(10px); width: 240px; }
+.no-available-polls-msg { background-color: #6691C6; .border(#364091, 1px, solid, 4px);
+  .font-style(14px, bold, #FFFFFF, normal); margin-right: -9px; padding: 4px;
+  text-align: center;
+}
+.poll-block-field {
+  margin-bottom: 4px;
+}
+.poll-block-finished { .font-style(12px, bold, #367d91, italic); display:none; }
+.poll-block-title { color: #1A2E46; font-weight:bold; font-size:16px; }
+.poll-block-descrip { font-style: italic; font-size:14px; }
+.poll-block-period { color: black; }
+.poll-period-label { font-weight: bold; }
+.poll-block-option { clear:both; color: black; }
+.poll-block-vote-btn { margin-top: 10px !important; }
+
+.your-vote-color-ref { height: 10px; width: 10px; background-color: #8bacd4; display: inline-block;
+  margin-right: 3px; .border(@color: #365f91, @radius: 2px);
+}
+.user-choice { .border(@color: #365f91, @radius: 2px); background-color: #8bacd4; color:#FFF;padding-left: 2px; }
+
+#polls-tab { .margin-left-right(auto); }
+#poll-columns { }
+.poll-column { 
+  float:left; min-width: 10px; min-height: 10px; height: 100%;
+  .padding-left-right(10px); padding-top: 10px;
+}
+.poll-column:empty {
+  padding:0; .exact-height(0);
+}
+#polls-home-search { text-align:right; float: right; .padding-top-bottom(5px); margin-right:10px;}
+
+#polls-toolbar { margin-bottom: 10px; }
+#polls-toolbar label { display: inline-block; font-weight: bold; width: 66px; }
+
+#polls-home-search-title { margin-bottom: 5px; }
+
+#polls-home-search .k-dropdown { width: 100px;text-align: left; }
+#polls-home-search-textbox { width:250px; }
+#polls-home-search-prefilter { width: 175px; }
+#polls-home-search-btn { width:20px; overflow:hidden; }
+#polls-home-search-btn span { width:18px; }
+
+#polls-home-search-sections { height: 30px; margin-bottom: 5px; }
+
+#polls-home-search-sections label { float: left; margin-top: 5px; margin-right: 3px; }
+#polls-home-search-sections .k-multiselect { border-color: #C5C5C5; width:636px; float:left; }
+#article-edit-sections-refresh-btn { float:left; margin-left: 3px; }
+
+#polls-home-search-period-label { margin-left: 10px; width: 45px !important; }
